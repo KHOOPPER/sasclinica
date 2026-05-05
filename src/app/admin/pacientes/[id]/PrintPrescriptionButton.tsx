@@ -58,10 +58,15 @@ async function generatePrescriptionPDF(data: PrescriptionData) {
   // Logo (Proportional scaling)
   if (data.clinicLogoUrl) {
     try {
-      // Usamos el optimizador de imágenes de Next.js como proxy para evitar bloqueos CORS del navegador
-      const proxiedUrl = `/_next/image?url=${encodeURIComponent(data.clinicLogoUrl)}&w=256&q=75`
-      
       const dataUrl = await new Promise<string>((resolve, reject) => {
+        // Si ya es un Base64 (enviado por el servidor), lo usamos directo
+        if (data.clinicLogoUrl?.startsWith('data:')) {
+          resolve(data.clinicLogoUrl)
+          return
+        }
+
+        // Si es una URL normal, intentamos el proxy como fallback
+        const proxiedUrl = `/_next/image?url=${encodeURIComponent(data.clinicLogoUrl!)}&w=256&q=75`
         fetch(proxiedUrl)
           .then(res => res.blob())
           .then(blob => {

@@ -52,11 +52,27 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
   const publicLogo = clinicInfo?.public_clinic_settings?.[0]?.clinic_logo || clinicInfo?.public_clinic_settings?.[0]?.logo_url
   const finalLogo = clinicInfo?.logo_url || publicLogo || undefined
 
+  // CONVERSIÓN A BASE64 EN EL SERVIDOR (Solución definitiva para CORS)
+  let logoBase64 = undefined
+  if (finalLogo) {
+    try {
+      const response = await fetch(finalLogo)
+      if (response.ok) {
+        const buffer = await response.arrayBuffer()
+        const contentType = response.headers.get('content-type') || 'image/png'
+        const base64 = Buffer.from(buffer).toString('base64')
+        logoBase64 = `data:${contentType};base64,${base64}`
+      }
+    } catch (e) {
+      console.error('Error convirtiendo logo a Base64:', e)
+    }
+  }
+
   const clinicData = {
     name: clinicInfo?.name || 'Clínica',
     address: (clinicInfo as any)?.address || undefined,
     phone: (clinicInfo as any)?.phone || undefined,
-    logo_url: finalLogo,
+    logo_url: logoBase64 || finalLogo, // Priorizamos el Base64 procesado por el servidor
   }
 
   // 4. Fetch fallback doctor (first registered doctor)
