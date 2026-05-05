@@ -19,12 +19,8 @@ export default function SitiosClient({ clinics }: SitiosClientProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
         {clinics.map(clinic => {
           const publicSettings = clinic.public_clinic_settings?.[0]
-          const generatedSlug = clinic.name.toLowerCase().trim()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/[\s_-]+/g, '-')
-            .replace(/^-+|-+$/g, '')
-          
-          const slug = publicSettings?.slug || generatedSlug
+          // Usar estrictamente el slug de la base de datos para evitar 404
+          const slug = publicSettings?.slug || clinic.tenants?.slug
           const logoUrl = publicSettings?.logo_url
           const heroImageUrl = publicSettings?.hero_image_url || 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=2070&auto=format&fit=crop'
           const expirationDate = clinic.tenants?.plan_expires_at 
