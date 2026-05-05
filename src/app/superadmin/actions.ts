@@ -469,3 +469,53 @@ export async function updateTenant(id: string, name: string, slug: string) {
     return { error: err.message || 'Error inesperado' }
   }
 }
+
+export async function updateTenantPlan(tenantId: string, plan: string, months: number, mrr: number) {
+  try {
+    const supabase = await createClient()
+    const { data: authData } = await supabase.auth.getUser()
+    if (!authData.user) return { error: 'No autenticado' }
+
+    const supabaseAdmin = createSupabaseAdmin(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('is_superadmin')
+      .eq('id', authData.user.id)
+      .single()
+    if (!profile?.is_superadmin) return { error: 'No tienes permisos de Superadmin' }
+
+    // Calculate expiration date
+    const expiresAt = new Date()
+    expiresAt.setMonth(expiresAt.getMonth() + months)
+
+    // Update tenant
+    const { error: tenantError } = await supabaseAdmin
+      .from('tenants')
+      .update({ 
+        plan, 
+        plan_expires_at: expiresAt.toISOString(), 
+        plan_mrr: mrr,
+        subscription_status: 'active'
+      })
+      .eq('id', tenantId)
+
+    if (tenantError) return { error: tenantError.message }
+
+    // Log manual payment for metrics
+    await supabaseAdmin.from('manual_payments').insert({
+      tenant_id: tenantId,
+      amount: mrr * months,
+      months,
+      plan_type: plan
+    })
+
+    revalidatePath('/superadmin')
+    return { success: true }
+  } catch (err: any) {
+    return { error: err.message || 'Error inesperado' }
+  }
+}
