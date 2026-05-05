@@ -66,14 +66,42 @@ export async function createClinicalRecord(prevState: any, formData: FormData) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { success: false, error: 'No autenticado' }
 
-    // Get tenant and clinic information
+    // Obtener información de la clínica de forma robusta
+    let tenantId = null
+    let clinicId = null
+
+    // Intento 1: Tabla tenant_users (Staff/Doctores)
     const { data: tenantUser } = await supabase
       .from('tenant_users')
       .select('tenant_id, clinic_id')
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
 
-    if (!tenantUser) return { success: false, error: 'Sin acceso a clínica' }
+    if (tenantUser) {
+      tenantId = tenantUser.tenant_id
+      clinicId = tenantUser.clinic_id
+    } else {
+      // Intento 2: Tabla profiles (Admins/Dueños)
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single()
+      
+      if (profile) {
+        tenantId = profile.tenant_id
+        // Si es admin, buscamos la primera clínica de ese tenant
+        const { data: firstClinic } = await supabase
+          .from('clinics')
+          .select('id')
+          .eq('tenant_id', tenantId)
+          .limit(1)
+          .single()
+        clinicId = firstClinic?.id
+      }
+    }
+
+    if (!tenantId) return { success: false, error: 'Sin acceso a clínica' }
 
     const patientId = formData.get('patientId') as string
     const motivo = formData.get('motivo') as string
@@ -94,8 +122,8 @@ export async function createClinicalRecord(prevState: any, formData: FormData) {
     )
 
     const { error } = await supabaseAdmin.from('clinical_records').insert({
-      tenant_id: tenantUser.tenant_id,
-      clinic_id: tenantUser.clinic_id, // Campo CRÍTICO para evitar el error de RLS
+      tenant_id: tenantId,
+      clinic_id: clinicId, // Campo CRÍTICO para evitar el error de RLS
       patient_id: patientId,
       doctor_id: user.id,
       motivo_consulta: motivo,
