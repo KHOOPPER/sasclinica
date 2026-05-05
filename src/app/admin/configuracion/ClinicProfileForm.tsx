@@ -93,29 +93,29 @@ export function ClinicProfileForm({ clinic }: { clinic: any }) {
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Detalles de tu arquitectura contratada</p>
         </div>
 
-        <div className="bg-slate-50 rounded-[2rem] p-8 border border-slate-100/50 flex flex-col md:flex-row items-center justify-between gap-8">
+        <div className="bg-slate-50 dark:bg-white/5 rounded-[2rem] p-8 border border-slate-100/50 dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="flex items-center gap-6">
-            <div className="h-16 w-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-600/20">
+            <div className="h-16 w-16 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-emerald-500/20">
               <Coins className="h-8 w-8" />
             </div>
             <div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Plan Actual</p>
-              <h4 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">
+              <h4 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">
                 {clinic.tenants?.plan || 'Básico'}
               </h4>
             </div>
           </div>
 
-          <div className="flex items-center gap-6 bg-white dark:bg-slate-900/50 px-8 py-4 rounded-2xl shadow-sm border border-slate-100">
+          <div className="flex items-center gap-6 bg-white dark:bg-white/5 px-8 py-4 rounded-2xl shadow-sm border border-slate-100 dark:border-white/10">
             <div className="text-right">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Próximo Vencimiento</p>
-              <h4 className="text-lg font-black text-blue-600 uppercase tracking-tighter">
+              <h4 className="text-lg font-black text-emerald-500 uppercase tracking-tighter">
                 {clinic.tenants?.plan_expires_at 
                   ? new Date(clinic.tenants.plan_expires_at).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
                   : 'Sin fecha establecida'}
               </h4>
             </div>
-            <div className="h-10 w-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400">
+            <div className="h-10 w-10 bg-slate-100 dark:bg-white/10 rounded-xl flex items-center justify-center text-slate-400 dark:text-slate-500">
               <Calendar className="h-5 w-5" />
             </div>
           </div>
