@@ -15,7 +15,7 @@ export default async function AdminConfigPage() {
   // Otherwise, fallback to the first clinic of the tenant.
   const query = supabase
     .from('clinics')
-    .select('*, public_clinic_settings(logo_url, clinic_logo)')
+    .select('*, tenants(id, name, plan, plan_expires_at), public_clinic_settings(logo_url, clinic_logo)')
   
   if (clinicId) {
     query.eq('id', clinicId)

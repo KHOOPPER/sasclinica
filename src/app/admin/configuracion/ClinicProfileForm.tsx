@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { updateClinicSettings } from './actions'
 import { toast } from 'sonner'
-import { Building2, Globe, Phone, MapPin, Coins, Image as ImageIcon } from 'lucide-react'
+import { Building2, Globe, Phone, MapPin, Coins, Image as ImageIcon, Calendar } from 'lucide-react'
 
 export function ClinicProfileForm({ clinic }: { clinic: any }) {
   const [logoUrl, setLogoUrl] = useState(clinic.logo_url || '')
@@ -84,6 +84,46 @@ export function ClinicProfileForm({ clinic }: { clinic: any }) {
             <Input id="address" name="address" defaultValue={clinic.address} placeholder="Calle Principal, Edificio Médico, Nivel 2..." className="h-14 bg-slate-50 border-none rounded-2xl px-6 text-sm font-bold text-slate-700 focus:ring-4 focus:ring-blue-600/5 transition-all" />
           </div>
         </div>
+      </div>
+
+      {/* SECCIÓN SUSCRIPCIÓN */}
+      <div className="space-y-6">
+        <div className="border-b border-slate-100 pb-4">
+          <h3 className="font-black text-slate-900 uppercase tracking-tight text-xl">Plan de Suscripción</h3>
+          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Detalles de tu arquitectura contratada</p>
+        </div>
+
+        <div className="bg-slate-50 rounded-[2rem] p-8 border border-slate-100/50 flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="flex items-center gap-6">
+            <div className="h-16 w-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-600/20">
+              <Coins className="h-8 w-8" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Plan Actual</p>
+              <h4 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">
+                {clinic.tenants?.plan || 'Básico'}
+              </h4>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-6 bg-white dark:bg-slate-900/50 px-8 py-4 rounded-2xl shadow-sm border border-slate-100">
+            <div className="text-right">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Próximo Vencimiento</p>
+              <h4 className="text-lg font-black text-blue-600 uppercase tracking-tighter">
+                {clinic.tenants?.plan_expires_at 
+                  ? new Date(clinic.tenants.plan_expires_at).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+                  : 'Sin fecha establecida'}
+              </h4>
+            </div>
+            <div className="h-10 w-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400">
+              <Calendar className="h-5 w-5" />
+            </div>
+          </div>
+        </div>
+        
+        <p className="text-[10px] font-bold text-slate-400 italic text-center px-8">
+          Para realizar cambios en tu plan o extender tu suscripción, por favor contacta con soporte técnico.
+        </p>
       </div>
 
       <div className="flex justify-end pt-10">
