@@ -125,6 +125,7 @@ export async function createClinicalRecord(prevState: any, formData: FormData) {
       tenant_id: tenantId,
       patient_id: patientId,
       doctor_id: user.id,
+      fecha_consulta: new Date().toISOString(), // Campo ESENCIAL para que aparezca en el historial
       motivo_consulta: motivo,
       sintomas: sintomas || null,
       diagnostico: diagnostico,

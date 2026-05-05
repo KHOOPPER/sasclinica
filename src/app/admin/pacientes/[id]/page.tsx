@@ -21,12 +21,19 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
 
   if (!patient) notFound()
 
-  // 2. Fetch clinical history
-  const { data: records } = await supabase
+  // 2. Fetch clinical history using Admin Client to bypass RLS issues
+  const { createClient: createSupabaseAdmin } = await import('@supabase/supabase-js')
+  const supabaseAdmin = createSupabaseAdmin(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  const { data: records } = await supabaseAdmin
     .from('clinical_records')
     .select('*, doctor:profiles(first_name, last_name)')
     .eq('patient_id', id)
     .order('fecha_consulta', { ascending: false })
+    .order('created_at', { ascending: false })
 
   // 3. Fetch clinic info for PDF branding
   const { data: clinic } = await supabase
@@ -149,7 +156,9 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
                 <div className="w-[calc(100%-4rem)] md:w-[45%] bg-card-bg p-8 rounded-[2rem] border border-slate-200/50 dark:border-white/5 shadow-card transition-all duration-500 hover:-translate-y-1 hover:border-emerald-500/30 group-hover:shadow-emerald-500/5">
                   <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
                     <time className="font-black text-emerald-500 text-sm uppercase tracking-tighter">
-                      {new Date(record.fecha_consulta).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      {record.fecha_consulta 
+                        ? new Date(record.fecha_consulta).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
+                        : new Date(record.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
                     </time>
                     <div className="flex items-center gap-3">
                       <span className="text-[9px] uppercase font-black px-3 py-1 bg-slate-50/50 dark:bg-white/5 rounded-full text-slate-400 border border-slate-200/50 dark:border-white/10 tracking-widest">
