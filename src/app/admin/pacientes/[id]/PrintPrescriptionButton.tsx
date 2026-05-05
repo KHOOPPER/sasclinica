@@ -158,13 +158,14 @@ async function generatePrescriptionPDF(data: PrescriptionData) {
   // Allergies (Clean look, no red)
   if (data.patientAlergias) {
     const allergyText = data.patientAlergias.toUpperCase() === 'NINGUNA' ? 'NINGUNA REPORTADA' : data.patientAlergias
-    const isNone = allergyText.includes('NINGUNA')
+    const allergyBg = (isNone ? [248, 250, 252] : [236, 253, 245]) as [number, number, number]
+    const allergyTextCol = (isNone ? medGray : green) as [number, number, number]
 
-    doc.setFillColor(...(isNone ? [248, 250, 252] : [236, 253, 245]))
+    doc.setFillColor(...allergyBg)
     doc.roundedRect(marginX, y, contentW, 9, 1.5, 1.5, 'F')
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(8)
-    doc.setTextColor(...(isNone ? medGray : green))
+    doc.setTextColor(...allergyTextCol)
     doc.text('ALERGIAS:', marginX + 4, y + 6)
     doc.setFont('helvetica', 'bold')
     doc.text(allergyText, marginX + 22, y + 6)
