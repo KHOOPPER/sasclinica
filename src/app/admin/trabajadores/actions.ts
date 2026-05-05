@@ -11,16 +11,42 @@ export async function createStaffMember(prevState: any, formData: FormData) {
 
     if (!authData.user) return { error: 'No autenticado' }
 
-    // 1. Get Admin's tenant_id and role
+    // 1. Get Admin's tenant_id and role with Plan info
     const { data: tenantUser } = await supabase
       .from('tenant_users')
-      .select('tenant_id, role')
+      .select(`
+        tenant_id, 
+        role, 
+        tenants (
+          plan
+        )
+      `)
       .eq('user_id', authData.user.id)
       .single()
 
     if (!tenantUser || tenantUser.role !== 'admin') {
       return { error: 'No tienes permisos de administrador para esta clínica' }
     }
+
+    // --- CHECK STAFF LIMITS BY PLAN ---
+    const currentPlan = (tenantUser.tenants as any)?.plan || 'basic'
+    const limits: Record<string, number> = { 'basic': 2, 'professional': 4, 'elite': 999 }
+    const maxWorkers = limits[currentPlan] || 2
+
+    const { count, error: countError } = await supabase
+      .from('staff_members')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantUser.tenant_id)
+
+    if (countError) return { error: 'Error verificando límites: ' + countError.message }
+    
+    if (count !== null && count >= maxWorkers) {
+      return { 
+        error: `LÍMITE ALCANZADO: Tu plan ${currentPlan.toUpperCase()} solo permite ${maxWorkers} trabajadores. Por favor, contacta a soporte o mejora tu plan para agregar más personal.`,
+        isLimitError: true 
+      }
+    }
+    // ----------------------------------
 
     const firstName = formData.get('firstName') as string
     const lastName = formData.get('lastName') as string
@@ -29,9 +55,8 @@ export async function createStaffMember(prevState: any, formData: FormData) {
     const role = formData.get('role') as string
     const imageUrl = formData.get('imageUrl') as string
 
-    // Map 'receptionist' to 'staff' for the database enum compliance for profiles and tenant_users
-    // DO NOT touch other roles as requested
-    const dbRole = role === 'receptionist' ? 'staff' : role;
+    // Map roles to valid DB enum values ('superadmin', 'admin', 'staff', 'patient')
+    const dbRole = (role === 'receptionist' || role === 'doctor') ? 'staff' : role;
 
     if (!firstName || !lastName || !email || !password || !role) {
       console.error('MISSING FIELDS: required fields for staff creation are missing')
@@ -198,8 +223,8 @@ export async function updateStaffMember(prevState: any, formData: FormData) {
     const imageUrl = formData.get('imageUrl') as string
     const newPassword = formData.get('newPassword') as string
 
-    // Map 'receptionist' to 'staff' for the database enum compliance
-    const dbRole = role === 'receptionist' ? 'staff' : role;
+    // Map roles to valid DB enum values
+    const dbRole = (role === 'receptionist' || role === 'doctor') ? 'staff' : role;
 
     if (!id || !userId || !firstName || !lastName || !role) {
       return { success: false, error: 'Todos los campos son obligatorios' }

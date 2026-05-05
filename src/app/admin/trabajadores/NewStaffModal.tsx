@@ -30,8 +30,27 @@ export function NewStaffModal() {
         <form action={formAction} className="space-y-4">
           
           {state?.error && (
-            <div className="p-4 mb-4 bg-red-500/10 text-red-500 text-[10px] rounded-2xl font-black uppercase tracking-widest border border-red-500/20 italic">
-              {state.error}
+            <div className={`p-6 mb-6 rounded-3xl font-black uppercase tracking-widest border transition-all animate-in fade-in slide-in-from-top-2 duration-500 ${
+              (state as any)?.isLimitError 
+                ? 'bg-amber-500/5 text-amber-600 border-amber-500/20 shadow-lg shadow-amber-500/5' 
+                : 'bg-red-500/5 text-red-500 border-red-500/20'
+            } text-[10px] italic relative overflow-hidden`}>
+              {(state as any)?.isLimitError && (
+                <>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-8 w-8 rounded-xl bg-amber-500 flex items-center justify-center text-white shadow-lg shadow-amber-500/30">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                    </div>
+                    <span className="text-[12px] tracking-tighter">Oportunidad de Crecimiento</span>
+                  </div>
+                  <div className="text-slate-500 dark:text-slate-400 normal-case font-bold mb-3 tracking-normal">
+                    Tu clínica está creciendo rápido. Para agregar más especialistas, necesitas una arquitectura de plan superior.
+                  </div>
+                </>
+              )}
+              <div className="leading-relaxed">
+                {state.error}
+              </div>
             </div>
           )}
 
