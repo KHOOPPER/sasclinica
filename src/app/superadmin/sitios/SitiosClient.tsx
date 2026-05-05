@@ -24,6 +24,7 @@ export default function SitiosClient({ clinics }: SitiosClientProps) {
             .replace(/[\s_-]+/g, '-')
             .replace(/^-+|-+$/g, '')
           
+          const slug = publicSettings?.slug || generatedSlug
           const logoUrl = publicSettings?.logo_url
           const heroImageUrl = publicSettings?.hero_image_url || 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=2070&auto=format&fit=crop'
           const expirationDate = clinic.tenants?.plan_expires_at 
