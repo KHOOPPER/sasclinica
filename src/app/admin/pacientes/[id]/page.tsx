@@ -36,25 +36,27 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
     .order('fecha_consulta', { ascending: false })
     .order('created_at', { ascending: false })
 
-  // 3. Fetch clinic info using the same Admin Client
-  // Intentamos obtener la clínica específica (si el paciente tiene clinic_id) o la primera del tenant
-  const { data: clinicInfo } = await supabaseAdmin
-    .from('clinics')
-    .select('name, address, phone, logo_url')
-    .eq(patient.clinic_id ? 'id' : 'tenant_id', patient.clinic_id || patient.tenant_id)
-    .maybeSingle()
+  // 3. Fetch clinic info using Admin Client to bypass RLS and ensure branding visibility
+  const clinicQuery = supabaseAdmin.from('clinics').select('*, public_clinic_settings(logo_url, clinic_logo)')
+  
+  if (patient.clinic_id) {
+    clinicQuery.eq('id', patient.clinic_id)
+  } else {
+    clinicQuery.eq('tenant_id', patient.tenant_id)
+  }
 
-  // Fallback a public_clinic_settings solo para el logo si clinics no lo tiene
-  if (!clinicInfo?.logo_url) {
-    const { data: settings } = await supabaseAdmin
-      .from('public_clinic_settings')
-      .select('clinic_logo, logo_url')
-      .eq('tenant_id', patient.tenant_id)
-      .maybeSingle()
-    
-    if (clinicInfo) {
-      clinicInfo.logo_url = settings?.clinic_logo || settings?.logo_url || clinicInfo.logo_url
-    }
+  const { data: clinics } = await clinicQuery
+  const clinicInfo = clinics?.[0] // Tomamos la primera encontrada
+
+  // Extraer el logo del mejor lugar disponible
+  const publicLogo = clinicInfo?.public_clinic_settings?.[0]?.clinic_logo || clinicInfo?.public_clinic_settings?.[0]?.logo_url
+  const finalLogo = clinicInfo?.logo_url || publicLogo || undefined
+
+  const clinicData = {
+    name: clinicInfo?.name || 'Clínica',
+    address: (clinicInfo as any)?.address || undefined,
+    phone: (clinicInfo as any)?.phone || undefined,
+    logo_url: finalLogo,
   }
 
   // 4. Fetch fallback doctor (first registered doctor)
@@ -66,13 +68,6 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
     .order('created_at', { ascending: true })
     .limit(1)
     .maybeSingle()
-
-  const clinicData = {
-    name: clinicInfo?.name || 'Clínica',
-    address: (clinicInfo as any)?.address || undefined,
-    phone: (clinicInfo as any)?.phone || undefined,
-    logo_url: (clinicInfo as any)?.logo_url || undefined,
-  }
 
   const fallbackDoctorName = fallbackDoctor ? `Dr. ${fallbackDoctor.full_name}` : 'Médico Responsable'
 
