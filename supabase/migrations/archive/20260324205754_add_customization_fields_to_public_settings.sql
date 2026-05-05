@@ -1,0 +1,6 @@
+ALTER TABLE public_clinic_settings 
+ADD COLUMN IF NOT EXISTS primary_color TEXT DEFAULT '#003366',
+ADD COLUMN IF NOT EXISTS secondary_color TEXT DEFAULT '#f8fafc',
+ADD COLUMN IF NOT EXISTS accent_color TEXT DEFAULT '#003366',
+ADD COLUMN IF NOT EXISTS animation_style TEXT DEFAULT 'fade',
+ADD COLUMN IF NOT EXISTS custom_sections JSONB DEFAULT '[]';

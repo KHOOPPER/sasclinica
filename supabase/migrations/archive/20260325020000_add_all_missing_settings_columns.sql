@@ -1,0 +1,33 @@
+-- Migration: Add ALL missing customization columns to public_clinic_settings
+-- This consolidates all previous migrations that may not have been applied
+
+ALTER TABLE public.public_clinic_settings
+  ADD COLUMN IF NOT EXISTS primary_color TEXT DEFAULT '#003366',
+  ADD COLUMN IF NOT EXISTS secondary_color TEXT DEFAULT '#f8fafc',
+  ADD COLUMN IF NOT EXISTS accent_color TEXT DEFAULT '#047857',
+  ADD COLUMN IF NOT EXISTS animation_style TEXT DEFAULT 'slide',
+  ADD COLUMN IF NOT EXISTS border_radius TEXT DEFAULT 'rounded-2xl',
+  ADD COLUMN IF NOT EXISTS hero_layout TEXT DEFAULT 'left',
+  ADD COLUMN IF NOT EXISTS show_services BOOLEAN DEFAULT true,
+  ADD COLUMN IF NOT EXISTS hero_badge TEXT,
+  ADD COLUMN IF NOT EXISTS hero_title TEXT,
+  ADD COLUMN IF NOT EXISTS hero_subtitle TEXT,
+  ADD COLUMN IF NOT EXISTS hero_image_url TEXT,
+  ADD COLUMN IF NOT EXISTS hero_title_italic BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS hero_subtitle_italic BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS logo_url TEXT,
+  ADD COLUMN IF NOT EXISTS logo_height INTEGER DEFAULT 40,
+  ADD COLUMN IF NOT EXISTS logo_width INTEGER DEFAULT 160,
+  ADD COLUMN IF NOT EXISTS logo_offset_y INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS logo_offset_x INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS trust_badge_1 TEXT,
+  ADD COLUMN IF NOT EXISTS trust_badge_2 TEXT,
+  ADD COLUMN IF NOT EXISTS trust_badge_3 TEXT,
+  ADD COLUMN IF NOT EXISTS trust_badges_color TEXT DEFAULT '#94a3b8',
+  ADD COLUMN IF NOT EXISTS contact_title TEXT,
+  ADD COLUMN IF NOT EXISTS contact_subtitle TEXT,
+  ADD COLUMN IF NOT EXISTS contact_phone TEXT,
+  ADD COLUMN IF NOT EXISTS contact_address TEXT,
+  ADD COLUMN IF NOT EXISTS contact_whatsapp TEXT,
+  ADD COLUMN IF NOT EXISTS services_title TEXT,
+  ADD COLUMN IF NOT EXISTS services_subtitle TEXT;

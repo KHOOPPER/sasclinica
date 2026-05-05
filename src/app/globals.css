@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Dynamic Theme Tokens */
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-secondary: var(--brand-secondary);
+  --color-brand-accent: var(--brand-accent);
+  
+  --color-bg-main: var(--bg-main);
+  --color-text-main: var(--text-main);
+  --color-card-bg: var(--card-bg);
+  --color-card-border: var(--card-border);
+  
+  /* Modern Typography Overrides */
+  --font-sans: 'Inter', 'Outfit', var(--font-geist-sans);
+  
+  /* Fast Animations */
+  --animate-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --animate-smooth: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:root {
+  /* Default: Apple Style (Claro) */
+  --brand-primary: #10b981; /* Emerald Apple */
+  --brand-secondary: #ecfdf5; /* Emerald ultra claro */
+  --brand-accent: #0f172a; 
+  
+  --bg-main: #F5F5F7; /* Gris Apple */
+  --text-main: #000000;
+  --card-bg: #ffffff;
+  
+  --card-border: rgba(0, 0, 0, 0.05);
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.03), 0 10px 40px rgba(0, 0, 0, 0.04);
+}
+
+.theme-noche {
+  /* Zero-White Dark (Oscuro) */
+  --brand-primary: #10b981; /* Esmeralda Premium */
+  --brand-secondary: rgba(16, 185, 129, 0.1); 
+  --brand-accent: #ffffff;
+  
+  --bg-main: #020617; /* slate-950 */
+  --text-main: #f8fafc;
+  --card-bg: rgba(15, 23, 42, 0.5); /* slate-900 con transparencia */
+  
+  --card-border: rgba(255, 255, 255, 0.05);
+  --card-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg-main);
+  color: var(--text-main);
+  transition: background var(--animate-fast), color var(--animate-fast);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Apple-style Premium Card Utility */
+.premium-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  border-radius: 1.5rem; /* Bordes más redondeados Apple style */
+  transition: all 0.15s cubic-bezier(0, 0, 0, 1);
+}
+
+.premium-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+}
+
+.theme-noche .premium-card:hover {
+  box-shadow: 0 10px 40px rgba(16, 185, 129, 0.05); /* Glow esmeralda tenue */
+}
+
+/* Rapid Animations */
+.animate-instant {
+  animation: fade-in 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Custom Scrollbar for Premium Experience */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--card-border);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-primary);
+}
