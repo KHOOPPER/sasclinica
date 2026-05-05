@@ -35,12 +35,23 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
     .order('fecha_consulta', { ascending: false })
     .order('created_at', { ascending: false })
 
-  // 3. Fetch clinic info for PDF branding
-  const { data: clinic } = await supabase
-    .from('clinics')
-    .select('name, address, phone, logo_url')
+  // 3. Fetch clinic info from public_clinic_settings for accurate branding
+  const { data: clinicSettings } = await supabase
+    .from('public_clinic_settings')
+    .select('name:clinic_name, address:clinic_address, phone:clinic_phone, logo_url:clinic_logo')
     .eq('tenant_id', patient.tenant_id)
     .maybeSingle()
+
+  // Si no hay settings, intentamos en la tabla clinics como fallback
+  let clinicInfo = clinicSettings
+  if (!clinicInfo || !clinicInfo.name) {
+    const { data: clinicFallback } = await supabase
+      .from('clinics')
+      .select('name, address, phone, logo_url')
+      .eq('tenant_id', patient.tenant_id)
+      .maybeSingle()
+    clinicInfo = clinicFallback
+  }
 
   // 4. Fetch fallback doctor (first registered doctor)
   const { data: fallbackDoctor } = await supabase
@@ -53,10 +64,10 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
     .maybeSingle()
 
   const clinicData = {
-    name: clinic?.name || 'Clínica',
-    address: clinic?.address || undefined,
-    phone: clinic?.phone || undefined,
-    logo_url: clinic?.logo_url || undefined,
+    name: clinicInfo?.name || 'Clínica',
+    address: clinicInfo?.address || clinicInfo?.clinic_address || undefined,
+    phone: clinicInfo?.phone || clinicInfo?.clinic_phone || undefined,
+    logo_url: clinicInfo?.logo_url || clinicInfo?.clinic_logo || undefined,
   }
 
   const fallbackDoctorName = fallbackDoctor ? `Dr. ${fallbackDoctor.full_name}` : 'Médico Responsable'

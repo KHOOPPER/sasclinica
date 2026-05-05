@@ -58,13 +58,20 @@ async function generatePrescriptionPDF(data: PrescriptionData) {
   // Logo (Proportional scaling)
   if (data.clinicLogoUrl) {
     try {
-      const res = await fetch(data.clinicLogoUrl)
-      const blob = await res.blob()
-      const reader = new FileReader()
+      const img = new Image()
+      img.crossOrigin = 'Anonymous'
+      
       const dataUrl = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve(reader.result as string)
-        reader.onerror = reject
-        reader.readAsDataURL(blob)
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          canvas.width = img.width
+          canvas.height = img.height
+          const ctx = canvas.getContext('2d')
+          ctx?.drawImage(img, 0, 0)
+          resolve(canvas.toDataURL('image/png'))
+        }
+        img.onerror = () => reject(new Error('Could not load image'))
+        img.src = data.clinicLogoUrl!
       })
       
       const props = doc.getImageProperties(dataUrl)
@@ -81,7 +88,9 @@ async function generatePrescriptionPDF(data: PrescriptionData) {
       }
       
       doc.addImage(dataUrl, 'PNG', marginX, headerY, logoW, imgH)
-    } catch (_) { /* no logo */ }
+    } catch (_) { 
+      console.error('Prescription Logo Load Error:', _)
+    }
   }
 
   // Clinic Info (Right aligned to the logo or left)
