@@ -24,41 +24,68 @@ export default function SitiosClient({ clinics }: SitiosClientProps) {
             .replace(/[\s_-]+/g, '-')
             .replace(/^-+|-+$/g, '')
           
-          const slug = publicSettings?.slug || generatedSlug
-          const publicUrl = `/${slug}`
+          const logoUrl = publicSettings?.logo_url
+          const heroImageUrl = publicSettings?.hero_image_url || 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=2070&auto=format&fit=crop'
+          const expirationDate = clinic.tenants?.plan_expires_at 
+            ? new Date(clinic.tenants.plan_expires_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })
+            : 'Sin fecha'
           
           return (
             <div key={clinic.id} className="group overflow-hidden rounded-[2.5rem] border border-slate-200/50 dark:border-white/5 bg-card-bg hover:border-emerald-500/30 shadow-card hover:shadow-emerald-500/10 transition-all duration-500 flex flex-col justify-between">
-              <div className="bg-slate-50/50 dark:bg-white/[0.02] p-8 border-b border-slate-100/50 dark:border-white/5 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-[0.03] dark:opacity-[0.05] group-hover:scale-150 transition-transform duration-1000">
-                   <Globe className="h-32 w-32 text-emerald-500" />
-                </div>
-
-                <div className="flex justify-between items-start mb-6 relative z-10">
-                  <div className="h-14 w-14 bg-card-bg dark:bg-white/10 rounded-2xl flex items-center justify-center text-emerald-500 font-black text-xl border border-slate-200/50 dark:border-white/5 shadow-xl group-hover:bg-emerald-500 group-hover:text-white transition-all duration-500 uppercase">
-                    {clinic.name[0]}
-                  </div>
-                  <div className="flex flex-col items-end gap-1.5">
-                    {publicSettings?.is_active && (
-                      <div className="bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase px-4 py-1.5 rounded-full tracking-widest border border-emerald-500/20">En Línea</div>
-                    )}
-                    <div className="bg-blue-500/10 text-blue-500 text-[9px] font-black uppercase px-4 py-1.5 rounded-full tracking-widest border border-blue-500/20">
-                      Plan {clinic.tenants?.plan || 'Básico'}
+              {/* Preview Header with Website Backdrop */}
+              <div className="h-48 relative overflow-hidden group/header">
+                <div 
+                  className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover/header:scale-110 blur-[2px] opacity-40 dark:opacity-20"
+                  style={{ backgroundImage: `url(${heroImageUrl})` }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-card-bg via-card-bg/80 to-transparent" />
+                
+                <div className="absolute inset-x-8 bottom-0 flex justify-between items-end pb-4">
+                  <div className="flex flex-col gap-1.5 relative z-10">
+                    <div className="flex items-center gap-2">
+                      <div className={`h-2 w-2 rounded-full ${publicSettings?.is_active ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-slate-400'}`} />
+                      <span className="text-[9px] font-black uppercase tracking-widest text-text-main opacity-80">
+                        {publicSettings?.is_active ? 'Publicado' : 'Borrador'}
+                      </span>
+                    </div>
+                    <div className="text-xl font-black text-text-main uppercase tracking-tighter leading-tight">
+                        {clinic.name}
                     </div>
                   </div>
-                </div>
-                <div className="text-xl font-black text-text-main uppercase tracking-tighter leading-tight relative z-10">
-                    {clinic.name}
-                </div>
-                <div className="font-black text-emerald-500/60 text-[9px] uppercase tracking-[0.2em] mt-2 relative z-10">
-                    {clinic.tenants?.name}
+                  
+                  <div className="h-16 w-16 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center p-2 shadow-2xl border border-slate-100 dark:border-white/10 relative z-20 group-hover:scale-105 transition-transform duration-500">
+                    {logoUrl ? (
+                      <img src={logoUrl} alt={clinic.name} className="h-full w-full object-contain" />
+                    ) : (
+                      <div className="h-full w-full rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-black text-xl uppercase">
+                        {clinic.name[0]}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-              
-              <div className="p-8 space-y-6">
-                 <div className="flex items-center gap-4 bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100/50 dark:border-white/5 rounded-2xl px-5 py-3 transition-all">
+
+              {/* Info Section */}
+              <div className="p-8 space-y-6 flex-1">
+                 <div className="flex items-center justify-between gap-4 bg-slate-50/50 dark:bg-white/[0.02] border border-slate-100/50 dark:border-white/5 rounded-2xl px-5 py-4 transition-all">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-500/10 rounded-lg">
+                        <CreditCard className="h-3.5 w-3.5 text-blue-500" />
+                      </div>
+                      <div>
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Plan Actual</p>
+                        <p className="text-[10px] font-black text-text-main uppercase">{clinic.tenants?.plan || 'Básico'}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Vencimiento</p>
+                      <p className="text-[10px] font-black text-emerald-500 uppercase">{expirationDate}</p>
+                    </div>
+                 </div>
+
+                 <div className="flex items-center gap-4 px-1">
                     <Globe className="h-3.5 w-3.5 text-slate-400" />
-                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 tracking-tight font-mono">/{slug}</span>
+                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 tracking-tight font-mono">kclinic.site/{slug}</span>
                  </div>
               </div>
 

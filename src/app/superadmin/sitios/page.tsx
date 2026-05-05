@@ -30,7 +30,7 @@ export default async function SitiosPage() {
 
   const { data: clinics } = await supabaseAdmin
     .from('clinics')
-    .select('*, tenants(id, name, slug, plan, plan_expires_at), public_clinic_settings(is_active, slug)')
+    .select('*, tenants(id, name, slug, plan, plan_expires_at), public_clinic_settings(is_active, slug, logo_url, hero_image_url, primary_color)')
     .order('name')
 
   return (
