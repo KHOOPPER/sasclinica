@@ -158,6 +158,7 @@ async function generatePrescriptionPDF(data: PrescriptionData) {
   // Allergies (Clean look, no red)
   if (data.patientAlergias) {
     const allergyText = data.patientAlergias.toUpperCase() === 'NINGUNA' ? 'NINGUNA REPORTADA' : data.patientAlergias
+    const isNone = allergyText.includes('NINGUNA')
     const allergyBg = (isNone ? [248, 250, 252] : [236, 253, 245]) as [number, number, number]
     const allergyTextCol = (isNone ? medGray : green) as [number, number, number]
 
