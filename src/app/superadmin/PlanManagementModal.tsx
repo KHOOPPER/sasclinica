@@ -27,18 +27,21 @@ const PLANS = [
 export function PlanManagementModal({ isOpen, onClose, tenant }: PlanManagementModalProps) {
   const [loading, setLoading] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState(tenant.plan || 'basic')
-  const [months, setMonths] = useState(1)
+  // Inicializar con la fecha actual de la clínica o hoy si no tiene
+  const initialDate = tenant.plan_expires_at ? new Date(tenant.plan_expires_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+  const [expiryDate, setExpiryDate] = useState(initialDate)
 
   const handleSave = async () => {
     setLoading(true)
     const planData = PLANS.find(p => p.id === selectedPlan)
-    const result = await updateTenantPlan(tenant.id, selectedPlan, months, planData?.price || 0)
+    
+    const result = await updateTenantPlan(tenant.id, selectedPlan, expiryDate, planData?.price || 0)
     setLoading(false)
 
     if (result.error) {
       toast.error(result.error)
     } else {
-      toast.success(`Plan ${selectedPlan.toUpperCase()} activado para ${tenant.name}`)
+      toast.success(`Plan ${selectedPlan.toUpperCase()} actualizado para ${tenant.name}`)
       onClose()
     }
   }
@@ -75,22 +78,19 @@ export function PlanManagementModal({ isOpen, onClose, tenant }: PlanManagementM
         </div>
 
         <div>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Duración de la Suscripción</p>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Vencimiento del Servicio</p>
           <div className="flex items-center gap-4 bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
             <div className="flex-1">
-              <p className="text-xs font-bold text-text-main">Meses a contratar</p>
-              <p className="text-[10px] text-slate-400 font-medium">Se sumarán a la fecha actual</p>
+              <p className="text-xs font-bold text-text-main">Nueva Fecha de Corte</p>
+              <p className="text-[10px] text-slate-400 font-medium italic">Actual: {tenant.plan_expires_at ? new Date(tenant.plan_expires_at).toLocaleDateString() : 'Sin fecha'}</p>
             </div>
             <div className="flex items-center gap-3">
-              <button 
-                onClick={() => setMonths(Math.max(1, months - 1))}
-                className="h-8 w-8 rounded-lg bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center font-black text-text-main"
-              >-</button>
-              <span className="w-8 text-center font-black text-text-main">{months}</span>
-              <button 
-                onClick={() => setMonths(months + 1)}
-                className="h-8 w-8 rounded-lg bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center font-black text-text-main"
-              >+</button>
+              <input 
+                type="date"
+                value={expiryDate}
+                onChange={(e) => setExpiryDate(e.target.value)}
+                className="bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm font-black text-text-main focus:ring-2 focus:ring-emerald-500 outline-none"
+              />
             </div>
           </div>
         </div>
@@ -98,16 +98,16 @@ export function PlanManagementModal({ isOpen, onClose, tenant }: PlanManagementM
         <div className="bg-slate-950 rounded-[2rem] p-6 text-white overflow-hidden relative">
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Resumen de Activación</p>
+              <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Resumen de Actualización</p>
               <CreditCard className="h-4 w-4 text-slate-500" />
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black">${(PLANS.find(p => p.id === selectedPlan)?.price || 0) * months}</span>
-              <span className="text-xs font-bold text-slate-400">Total Pago Manual</span>
+              <span className="text-3xl font-black">{selectedPlan.toUpperCase()}</span>
+              <span className="text-xs font-bold text-slate-400">Arquitectura Seleccionada</span>
             </div>
             <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase">
               <Calendar className="h-3 w-3" />
-              Vence: {new Date(new Date().setMonth(new Date().getMonth() + months)).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}
+              Nuevo Vencimiento: {new Date(expiryDate + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}
             </div>
           </div>
           <div className="absolute top-0 right-0 p-8 opacity-10">

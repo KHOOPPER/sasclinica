@@ -470,7 +470,7 @@ export async function updateTenant(id: string, name: string, slug: string) {
   }
 }
 
-export async function updateTenantPlan(tenantId: string, plan: string, months: number, mrr: number) {
+export async function updateTenantPlan(tenantId: string, plan: string, expiryDate: string, mrr: number) {
   try {
     const supabase = await createClient()
     const { data: authData } = await supabase.auth.getUser()
@@ -488,16 +488,17 @@ export async function updateTenantPlan(tenantId: string, plan: string, months: n
       .single()
     if (!profile?.is_superadmin) return { error: 'No tienes permisos de Superadmin' }
 
-    // Calculate expiration date
-    const expiresAt = new Date()
-    expiresAt.setMonth(expiresAt.getMonth() + months)
+    // Calcular meses aproximados para el log de pagos (solo para métricas)
+    const d1 = new Date()
+    const d2 = new Date(expiryDate)
+    const months = Math.max(1, (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth()))
 
     // Update tenant
     const { error: tenantError } = await supabaseAdmin
       .from('tenants')
       .update({ 
         plan, 
-        plan_expires_at: expiresAt.toISOString(), 
+        plan_expires_at: new Date(expiryDate + 'T23:59:59').toISOString(), 
         plan_mrr: mrr,
         subscription_status: 'active'
       })
