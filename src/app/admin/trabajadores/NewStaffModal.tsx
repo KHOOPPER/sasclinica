@@ -30,27 +30,42 @@ export function NewStaffModal() {
         <form action={formAction} className="space-y-4">
           
           {state?.error && (
-            <div className={`p-6 mb-6 rounded-3xl font-black uppercase tracking-widest border transition-all animate-in fade-in slide-in-from-top-2 duration-500 ${
+            <div className={`relative overflow-hidden rounded-[2rem] border transition-all duration-500 ${
               (state as any)?.isLimitError 
-                ? 'bg-amber-500/5 text-amber-600 border-amber-500/20 shadow-lg shadow-amber-500/5' 
-                : 'bg-red-500/5 text-red-500 border-red-500/20'
-            } text-[10px] italic relative overflow-hidden`}>
-              {(state as any)?.isLimitError && (
-                <>
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="h-8 w-8 rounded-xl bg-amber-500 flex items-center justify-center text-white shadow-lg shadow-amber-500/30">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                ? 'bg-gradient-to-br from-amber-50 to-white dark:from-amber-500/10 dark:to-transparent border-amber-200 dark:border-amber-500/30 shadow-2xl shadow-amber-500/10' 
+                : 'bg-red-50/50 dark:bg-red-500/5 border-red-100 dark:border-red-500/20 text-red-500'
+            }`}>
+              {(state as any)?.isLimitError ? (
+                <div className="p-8">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="h-12 w-12 rounded-2xl bg-amber-500 flex items-center justify-center text-white shadow-xl shadow-amber-500/40 shrink-0">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
                     </div>
-                    <span className="text-[12px] tracking-tighter">Oportunidad de Crecimiento</span>
+                    <div>
+                      <h4 className="text-amber-600 font-black uppercase tracking-tighter text-lg leading-none">Oportunidad de Crecimiento</h4>
+                      <p className="text-[10px] font-bold text-amber-500/70 uppercase tracking-widest mt-1">Upgrade de Arquitectura Requerido</p>
+                    </div>
                   </div>
-                  <div className="text-slate-500 dark:text-slate-400 normal-case font-bold mb-3 tracking-normal">
-                    Tu clínica está creciendo rápido. Para agregar más especialistas, necesitas una arquitectura de plan superior.
+                  <div className="space-y-3">
+                    <p className="text-slate-600 dark:text-slate-400 text-xs font-medium leading-relaxed">
+                      Tu clínica ha superado los límites del plan actual. Para integrar a <span className="font-black text-amber-600">más especialistas</span> y escalar tu operación, necesitas saltar al siguiente nivel.
+                    </p>
+                    <div className="bg-amber-500/10 rounded-xl p-4 border border-amber-500/20">
+                      <p className="text-[10px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-wide italic">
+                        {state.error}
+                      </p>
+                    </div>
                   </div>
-                </>
+                  {/* Decorative element */}
+                  <div className="absolute -bottom-6 -right-6 opacity-5 dark:opacity-10 rotate-12">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 text-[10px] font-black uppercase tracking-widest italic">
+                  {state.error}
+                </div>
               )}
-              <div className="leading-relaxed">
-                {state.error}
-              </div>
             </div>
           )}
 
@@ -77,16 +92,21 @@ export function NewStaffModal() {
 
           <div className="space-y-2">
             <Label htmlFor="role" className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Rol en la Clínica</Label>
-            <select 
-              id="role" 
-              name="role" 
-              required 
-              className="w-full flex h-12 rounded-2xl border border-slate-200/50 dark:border-white/10 bg-transparent dark:bg-black/20 px-4 py-2 font-black text-text-main placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:border-emerald-500 transition-all shadow-sm"
-            >
-              <option value="" className="text-slate-900">Selecciona un rol...</option>
-              <option value="doctor" className="text-slate-900">Doctor / Especialista</option>
-              <option value="receptionist" className="text-slate-900">Recepcionista</option>
-            </select>
+            <div className="relative group">
+              <select 
+                id="role" 
+                name="role" 
+                required 
+                className="w-full h-12 rounded-2xl border border-slate-200/50 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-2 font-black text-text-main appearance-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:border-emerald-500 transition-all shadow-sm cursor-pointer"
+              >
+                <option value="" className="text-slate-900 bg-white">Selecciona un rol...</option>
+                <option value="doctor" className="text-slate-900 bg-white">Doctor / Especialista</option>
+                <option value="receptionist" className="text-slate-900 bg-white">Recepcionista</option>
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-hover:text-emerald-500 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-2">
