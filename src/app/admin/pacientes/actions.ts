@@ -123,7 +123,6 @@ export async function createClinicalRecord(prevState: any, formData: FormData) {
 
     const { error } = await supabaseAdmin.from('clinical_records').insert({
       tenant_id: tenantId,
-      clinic_id: clinicId, // Campo CRÍTICO para evitar el error de RLS
       patient_id: patientId,
       doctor_id: user.id,
       motivo_consulta: motivo,
