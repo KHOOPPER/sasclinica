@@ -22,13 +22,13 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
 
   if (!patient) notFound()
 
-  // 2. Fetch clinical history using Admin Client to bypass RLS issues
-  const { createClient: createSupabaseAdmin } = await import('@supabase/supabase-js')
+  // Initialize Admin Client once for all data fetching
   const supabaseAdmin = createSupabaseAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
+  // 2. Fetch data using Admin Client to bypass RLS issues
   const { data: records } = await supabaseAdmin
     .from('clinical_records')
     .select('*, doctor:profiles(first_name, last_name)')
@@ -36,12 +36,7 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
     .order('fecha_consulta', { ascending: false })
     .order('created_at', { ascending: false })
 
-  // 3. Fetch clinic info using Admin Client to bypass RLS and ensure branding visibility
-  const supabaseAdmin = createSupabaseAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-
+  // 3. Fetch clinic info using the same Admin Client
   // Intentamos obtener la clínica específica (si el paciente tiene clinic_id) o la primera del tenant
   const { data: clinicInfo } = await supabaseAdmin
     .from('clinics')
