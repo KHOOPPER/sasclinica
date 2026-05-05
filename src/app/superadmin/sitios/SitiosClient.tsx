@@ -54,7 +54,12 @@ export default function SitiosClient({ clinics }: SitiosClientProps) {
                     </div>
                   </div>
                   
-                  <div className="h-16 w-16 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center p-2 shadow-2xl border border-slate-100 dark:border-white/10 relative z-20 group-hover:scale-105 transition-transform duration-500">
+                  <a 
+                    href={`/${slug}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="h-16 w-16 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center p-2 shadow-2xl border border-slate-100 dark:border-white/10 relative z-20 group-hover:scale-110 transition-all duration-500 cursor-pointer hover:border-emerald-500"
+                  >
                     {logoUrl ? (
                       <img src={logoUrl} alt={clinic.name} className="h-full w-full object-contain" />
                     ) : (
@@ -62,7 +67,7 @@ export default function SitiosClient({ clinics }: SitiosClientProps) {
                         {clinic.name[0]}
                       </div>
                     )}
-                  </div>
+                  </a>
                 </div>
               </div>
 
