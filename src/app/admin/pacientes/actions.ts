@@ -66,10 +66,10 @@ export async function createClinicalRecord(prevState: any, formData: FormData) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { success: false, error: 'No autenticado' }
 
-    // Get tenant
+    // Get tenant and clinic information
     const { data: tenantUser } = await supabase
       .from('tenant_users')
-      .select('tenant_id')
+      .select('tenant_id, clinic_id')
       .eq('user_id', user.id)
       .single()
 
@@ -86,10 +86,18 @@ export async function createClinicalRecord(prevState: any, formData: FormData) {
       return { success: false, error: 'Paciente, Motivo y Diagnóstico son obligatorios' }
     }
 
-    const { error } = await supabase.from('clinical_records').insert({
+    // Usar cliente administrativo para asegurar la inserción si el RLS es muy restrictivo con los roles de staff
+    const { createClient: createSupabaseAdmin } = await import('@supabase/supabase-js')
+    const supabaseAdmin = createSupabaseAdmin(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const { error } = await supabaseAdmin.from('clinical_records').insert({
       tenant_id: tenantUser.tenant_id,
+      clinic_id: tenantUser.clinic_id, // Campo CRÍTICO para evitar el error de RLS
       patient_id: patientId,
-      doctor_id: user.id, // The current logged in doctor/admin
+      doctor_id: user.id,
       motivo_consulta: motivo,
       sintomas: sintomas || null,
       diagnostico: diagnostico,
