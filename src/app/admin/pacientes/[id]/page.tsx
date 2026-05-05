@@ -65,9 +65,9 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
 
   const clinicData = {
     name: clinicInfo?.name || 'Clínica',
-    address: clinicInfo?.address || clinicInfo?.clinic_address || undefined,
-    phone: clinicInfo?.phone || clinicInfo?.clinic_phone || undefined,
-    logo_url: clinicInfo?.logo_url || clinicInfo?.clinic_logo || undefined,
+    address: (clinicInfo as any)?.address || undefined,
+    phone: (clinicInfo as any)?.phone || undefined,
+    logo_url: (clinicInfo as any)?.logo_url || undefined,
   }
 
   const fallbackDoctorName = fallbackDoctor ? `Dr. ${fallbackDoctor.full_name}` : 'Médico Responsable'
