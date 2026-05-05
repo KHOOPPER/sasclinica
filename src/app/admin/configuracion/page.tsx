@@ -74,7 +74,7 @@ export default async function AdminConfigPage() {
       </div>
 
       {/* MAIN FORM CARD */}
-      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
+      <div className="bg-white dark:bg-slate-900/50 rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden">
         <div className="p-10">
           <ClinicProfileForm clinic={clinic} />
         </div>

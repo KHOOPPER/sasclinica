@@ -35,15 +35,15 @@ export function ClinicProfileForm({ clinic }: { clinic: any }) {
       
       {/* SECCIÓN IDENTIDAD */}
       <div className="space-y-6">
-        <div className="border-b border-slate-100 pb-4">
-          <h3 className="font-black text-slate-900 uppercase tracking-tight text-xl">Identidad</h3>
+        <div className="border-b border-slate-100 dark:border-white/5 pb-4">
+          <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tight text-xl">Identidad</h3>
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Nombre y Logotipo principal</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-2">
             <Label htmlFor="name" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre Comercial</Label>
-            <Input id="name" name="name" defaultValue={clinic.name} required className="h-14 bg-slate-50 border-none rounded-2xl px-6 text-sm font-bold text-slate-700 focus:ring-4 focus:ring-blue-600/5 transition-all" />
+            <Input id="name" name="name" defaultValue={clinic.name} required className="h-14 bg-slate-50 dark:bg-white/5 border-none rounded-2xl px-6 text-sm font-bold text-slate-700 dark:text-slate-200 focus:ring-4 focus:ring-blue-600/5 transition-all" />
           </div>
 
           <div className="space-y-2">
@@ -54,10 +54,10 @@ export function ClinicProfileForm({ clinic }: { clinic: any }) {
                 value={logoUrl} 
                 onChange={(e) => setLogoUrl(e.target.value)}
                 placeholder="https://tu-sitio.com/logo.png" 
-                className="h-14 bg-slate-50 border-none rounded-2xl px-6 text-sm font-bold text-slate-700 focus:ring-4 focus:ring-blue-600/5 transition-all flex-1" 
+                className="h-14 bg-slate-50 dark:bg-white/5 border-none rounded-2xl px-6 text-sm font-bold text-slate-700 dark:text-slate-200 focus:ring-4 focus:ring-blue-600/5 transition-all flex-1" 
               />
               {logoUrl && (
-                <div className="h-14 w-14 rounded-2xl bg-white border border-slate-100 p-2 flex items-center justify-center shadow-sm">
+                <div className="h-14 w-14 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-2 flex items-center justify-center shadow-sm">
                   <img src={logoUrl} alt="Preview" className="max-h-full max-w-full object-contain" onError={() => toast.error('Error al cargar la vista previa del logo')} />
                 </div>
               )}
@@ -68,28 +68,28 @@ export function ClinicProfileForm({ clinic }: { clinic: any }) {
 
       {/* SECCIÓN CONTACTO Y LOCALIZACIÓN */}
       <div className="space-y-6">
-        <div className="border-b border-slate-100 pb-4">
-          <h3 className="font-black text-slate-900 uppercase tracking-tight text-xl">Contacto y Ubicación</h3>
+        <div className="border-b border-slate-100 dark:border-white/5 pb-4">
+          <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tight text-xl">Contacto y Ubicación</h3>
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Información que verán tus trabajadores</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-2">
             <Label htmlFor="phone" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Teléfono de Atención</Label>
-            <Input id="phone" name="phone" defaultValue={clinic.phone} placeholder="2200-0000" className="h-14 bg-slate-50 border-none rounded-2xl px-6 text-sm font-bold text-slate-700 focus:ring-4 focus:ring-blue-600/5 transition-all" />
+            <Input id="phone" name="phone" defaultValue={clinic.phone} placeholder="2200-0000" className="h-14 bg-slate-50 dark:bg-white/5 border-none rounded-2xl px-6 text-sm font-bold text-slate-700 dark:text-slate-200 focus:ring-4 focus:ring-blue-600/5 transition-all" />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="address" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Dirección Física Completa</Label>
-            <Input id="address" name="address" defaultValue={clinic.address} placeholder="Calle Principal, Edificio Médico, Nivel 2..." className="h-14 bg-slate-50 border-none rounded-2xl px-6 text-sm font-bold text-slate-700 focus:ring-4 focus:ring-blue-600/5 transition-all" />
+            <Input id="address" name="address" defaultValue={clinic.address} placeholder="Calle Principal, Edificio Médico, Nivel 2..." className="h-14 bg-slate-50 dark:bg-white/5 border-none rounded-2xl px-6 text-sm font-bold text-slate-700 dark:text-slate-200 focus:ring-4 focus:ring-blue-600/5 transition-all" />
           </div>
         </div>
       </div>
 
       {/* SECCIÓN SUSCRIPCIÓN */}
       <div className="space-y-6">
-        <div className="border-b border-slate-100 pb-4">
-          <h3 className="font-black text-slate-900 uppercase tracking-tight text-xl">Plan de Suscripción</h3>
+        <div className="border-b border-slate-100 dark:border-white/5 pb-4">
+          <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tight text-xl">Plan de Suscripción</h3>
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Detalles de tu arquitectura contratada</p>
         </div>
 
