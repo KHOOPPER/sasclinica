@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseAdmin } from '@supabase/supabase-js'
 import { requireRole } from '@/lib/auth-utils'
 import { notFound } from 'next/navigation'
 import { NewRecordModal } from '../NewRecordModal'
@@ -35,22 +36,30 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
     .order('fecha_consulta', { ascending: false })
     .order('created_at', { ascending: false })
 
-  // 3. Fetch clinic info from public_clinic_settings for accurate branding
-  const { data: clinicSettings } = await supabase
-    .from('public_clinic_settings')
-    .select('name:clinic_name, address:clinic_address, phone:clinic_phone, logo_url:clinic_logo')
-    .eq('tenant_id', patient.tenant_id)
+  // 3. Fetch clinic info using Admin Client to bypass RLS and ensure branding visibility
+  const supabaseAdmin = createSupabaseAdmin(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  // Intentamos obtener la clínica específica (si el paciente tiene clinic_id) o la primera del tenant
+  const { data: clinicInfo } = await supabaseAdmin
+    .from('clinics')
+    .select('name, address, phone, logo_url')
+    .eq(patient.clinic_id ? 'id' : 'tenant_id', patient.clinic_id || patient.tenant_id)
     .maybeSingle()
 
-  // Si no hay settings, intentamos en la tabla clinics como fallback
-  let clinicInfo = clinicSettings
-  if (!clinicInfo || !clinicInfo.name) {
-    const { data: clinicFallback } = await supabase
-      .from('clinics')
-      .select('name, address, phone, logo_url')
+  // Fallback a public_clinic_settings solo para el logo si clinics no lo tiene
+  if (!clinicInfo?.logo_url) {
+    const { data: settings } = await supabaseAdmin
+      .from('public_clinic_settings')
+      .select('clinic_logo, logo_url')
       .eq('tenant_id', patient.tenant_id)
       .maybeSingle()
-    clinicInfo = clinicFallback
+    
+    if (clinicInfo) {
+      clinicInfo.logo_url = settings?.clinic_logo || settings?.logo_url || clinicInfo.logo_url
+    }
   }
 
   // 4. Fetch fallback doctor (first registered doctor)
