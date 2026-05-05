@@ -49,12 +49,13 @@ async function generatePrescriptionPDF(data: PrescriptionData) {
   const red = [185, 28, 28] as [number, number, number]
   const lightRed = [254, 226, 226] as [number, number, number]
 
-  // ─── HEADER BAND ────────────────────────────────────────
-  doc.setFillColor(...blue)
-  doc.rect(0, 0, pageW, 40, 'F')
+  // ─── HEADER (CLEAN & MODERN) ───────────────────────────
+  // White background, logo on left, info on right
+  
+  let headerY = 15
+  let logoW = 0
 
   // Logo (Proportional scaling)
-  let logoOffset = 0
   if (data.clinicLogoUrl) {
     try {
       const res = await fetch(data.clinicLogoUrl)
@@ -68,89 +69,105 @@ async function generatePrescriptionPDF(data: PrescriptionData) {
       
       const props = doc.getImageProperties(dataUrl)
       const ratio = props.width / props.height
-      const maxW = 32
-      const maxH = 28
+      const maxW = 35
+      const maxH = 22
       
-      let imgW = maxW
-      let imgH = imgW / ratio
+      logoW = maxW
+      let imgH = logoW / ratio
       
       if (imgH > maxH) {
         imgH = maxH
-        imgW = imgH * ratio
+        logoW = imgH * ratio
       }
       
-      doc.addImage(dataUrl, 'PNG', marginX, 6 + (maxH - imgH) / 2, imgW, imgH)
-      logoOffset = imgW + 6
+      doc.addImage(dataUrl, 'PNG', marginX, headerY, logoW, imgH)
     } catch (_) { /* no logo */ }
   }
 
-  // Clinic name & info
-  const textX = marginX + logoOffset
+  // Clinic Info (Right aligned to the logo or left)
+  const infoX = logoW > 0 ? marginX + logoW + 8 : marginX
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(18)
-  doc.setTextColor(255, 255, 255)
-  doc.text(data.clinicName, textX, 18)
+  doc.setTextColor(...blue)
+  doc.text(data.clinicName.toUpperCase(), infoX, headerY + 7)
 
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8.5)
-  doc.setTextColor(200, 220, 255)
-  const contactLine = [data.clinicAddress, data.clinicPhone].filter(Boolean).join('  |  ')
-  if (contactLine) doc.text(contactLine, textX, 26)
-  doc.text('EXPEDIENTE CLÍNICO — RECETA MÉDICA', textX, 33)
+  doc.setFontSize(8)
+  doc.setTextColor(...medGray)
+  const address = data.clinicAddress || 'Dirección no registrada'
+  const phone = data.clinicPhone ? `Tel: ${data.clinicPhone}` : ''
+  doc.text(address, infoX, headerY + 12, { maxWidth: contentW - logoW - 10 })
+  if (phone) doc.text(phone, infoX, headerY + 16)
+
+  // Decorative line
+  doc.setDrawColor(...lightBlue)
+  doc.setLineWidth(0.5)
+  doc.line(marginX, headerY + 25, marginX + contentW, headerY + 25)
+
+  // Subtitle
+  doc.setFontSize(7)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(...medGray)
+  doc.text('DOCUMENTO MÉDICO OFICIAL — RECETA DE TRATAMIENTO', marginX + contentW, headerY + 29, { align: 'right' })
 
   // ─── PRESCRIPTION TITLE ─────────────────────────────────
-  doc.setFillColor(...lightBlue)
-  doc.roundedRect(marginX, 48, contentW, 10, 2, 2, 'F')
+  let y = 50
+  doc.setFillColor(248, 250, 252)
+  doc.roundedRect(marginX, y, contentW, 10, 2, 2, 'F')
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(12)
   doc.setTextColor(...blue)
-  doc.text('RECETA MÉDICA', pageW / 2, 55, { align: 'center' })
+  doc.text('RECETA MÉDICA', pageW / 2, y + 6.5, { align: 'center' })
 
   // ─── PATIENT INFO SECTION ────────────────────────────────
-  let y = 68
+  y = 72
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(8)
   doc.setTextColor(...medGray)
-  doc.text('DATOS DEL PACIENTE', marginX, y)
+  doc.text('INFORMACIÓN DEL PACIENTE', marginX, y)
 
   doc.setDrawColor(...lightBlue)
-  doc.setLineWidth(0.3)
+  doc.setLineWidth(0.2)
   doc.line(marginX, y + 1.5, marginX + contentW, y + 1.5)
 
   y += 8
 
   const col2 = marginX + contentW / 2
   const pairs: [string, string][] = [
-    ['Nombre Completo:', data.patientName],
-    ['DUI:', data.patientDui],
+    ['Paciente:', data.patientName.toUpperCase()],
+    ['Identificación (DUI):', data.patientDui],
     ['Edad:', calcAge(data.patientBirthDate)],
-    ['Fecha de Consulta:', new Date(data.recordDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })],
+    ['Fecha de Emisión:', new Date(data.recordDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })],
   ]
 
   pairs.forEach(([label, value], i) => {
     const col = i % 2 === 0 ? marginX : col2
     doc.setFont('helvetica', 'bold')
-    doc.setFontSize(8)
+    doc.setFontSize(7.5)
     doc.setTextColor(...medGray)
     doc.text(label, col, y)
-    doc.setFont('helvetica', 'normal')
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(8.5)
     doc.setTextColor(...darkGray)
-    doc.text(value, col + 38, y)
+    doc.text(value, col + 32, y)
     if (i % 2 === 1) y += 8
   })
   y += 2
 
-  // Allergies warning (Keep if present, very important for safety)
+  // Allergies (Clean look, no red)
   if (data.patientAlergias) {
-    doc.setFillColor(...lightRed)
-    doc.roundedRect(marginX, y, contentW, 10, 1.5, 1.5, 'F')
+    const allergyText = data.patientAlergias.toUpperCase() === 'NINGUNA' ? 'NINGUNA REPORTADA' : data.patientAlergias
+    const isNone = allergyText.includes('NINGUNA')
+
+    doc.setFillColor(...(isNone ? [248, 250, 252] : [236, 253, 245]))
+    doc.roundedRect(marginX, y, contentW, 9, 1.5, 1.5, 'F')
     doc.setFont('helvetica', 'bold')
-    doc.setFontSize(8.5)
-    doc.setTextColor(...red)
-    doc.text('⚠ ALERGIAS:', marginX + 4, y + 6.5)
-    doc.setFont('helvetica', 'normal')
-    doc.text(data.patientAlergias, marginX + 34, y + 6.5)
+    doc.setFontSize(8)
+    doc.setTextColor(...(isNone ? medGray : green))
+    doc.text('ALERGIAS:', marginX + 4, y + 6)
+    doc.setFont('helvetica', 'bold')
+    doc.text(allergyText, marginX + 22, y + 6)
     y += 16
   } else {
     y += 6
@@ -160,67 +177,56 @@ async function generatePrescriptionPDF(data: PrescriptionData) {
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(9)
   doc.setTextColor(...medGray)
-  doc.text('TRATAMIENTO Y MEDICACIÓN', marginX, y)
+  doc.text('INDICACIONES Y TRATAMIENTO', marginX, y)
   doc.line(marginX, y + 1.5, marginX + contentW, y + 1.5)
   y += 8
 
   const lines = doc.splitTextToSize(data.tratamiento || 'Sin indicaciones registradas.', contentW - 10)
-  const blockH = Math.max(lines.length * 6 + 10, 60) // At least 60mm for treatment space
+  const blockH = Math.max(lines.length * 6 + 10, 80) // More space for treatment
   
-  doc.setFillColor(249, 250, 251)
-  doc.setDrawColor(229, 231, 235)
-  doc.roundedRect(marginX, y, contentW, blockH, 2, 2, 'FD')
+  doc.setFillColor(255, 255, 255)
+  doc.setDrawColor(...lightBlue)
+  doc.roundedRect(marginX, y, contentW, blockH, 2, 2, 'D')
   
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(10.5)
+  doc.setFontSize(11)
   doc.setTextColor(...darkGray)
-  doc.text(lines, marginX + 5, y + 8)
+  doc.text(lines, marginX + 5, y + 9)
   
-  y += blockH + 25
+  y += blockH + 30
 
-  // ─── FOOTER VALIDATION (Two Columns) ───────────────────
-  // Position it near the bottom but above the blue band
-  const footerY = pageH - 58
-  const colW = contentW / 2 - 10
+  // ─── FOOTER VALIDATION (Signatures) ────────────────────
+  const footerY = pageH - 65
+  const colW = contentW / 2 - 15
 
-  // Left Column: Signature
+  // Signature line
   doc.setDrawColor(...medGray)
   doc.setLineWidth(0.4)
-  ;(doc as any).setLineDash([], 0) // Solid line
-  doc.line(marginX, footerY, marginX + colW, footerY)
+  doc.line(marginX + 5, footerY, marginX + colW + 5, footerY)
 
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(9)
+  doc.setFontSize(10)
   doc.setTextColor(...darkGray)
-  doc.text(data.doctorName, marginX + colW / 2, footerY + 5, { align: 'center' })
+  doc.text(data.doctorName.toUpperCase(), marginX + 5 + colW / 2, footerY + 6, { align: 'center' })
 
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(7.5)
+  doc.setFontSize(7)
   doc.setTextColor(...medGray)
-  doc.text('Firma del Médico', marginX + colW / 2, footerY + 10, { align: 'center' })
+  doc.text('FIRMA DEL MÉDICO RESPONSABLE', marginX + 5 + colW / 2, footerY + 10, { align: 'center' })
 
-  // Right Column: Stamp
+  // Stamp line
   const stampX = marginX + contentW / 2 + 10
-  const stampW = colW
+  doc.line(stampX + 5, footerY, stampX + colW + 5, footerY)
+  doc.text('SELLO DE LA CLÍNICA', stampX + 5 + colW / 2, footerY + 10, { align: 'center' })
 
-  doc.setDrawColor(...medGray)
-  doc.setLineWidth(0.4)
-  ;(doc as any).setLineDash([], 0) // Solid line
-  doc.line(stampX, footerY, stampX + stampW, footerY)
-  
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(7.5)
-  doc.setTextColor(...medGray)
-  doc.text('Sello del Médico', stampX + stampW / 2, footerY + 10, { align: 'center' })
-
-  // ─── FOOTER ─────────────────────────────────────────────
+  // ─── FOOTER BAND ────────────────────────────────────────
   doc.setFillColor(...blue)
-  doc.rect(0, pageH - 14, pageW, 14, 'F')
+  doc.rect(0, pageH - 12, pageW, 12, 'F')
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(7.5)
+  doc.setFontSize(7)
   doc.setTextColor(255, 255, 255)
-  doc.text(`Documento generado el ${new Date().toLocaleDateString('es-ES')} — Pág 1 de 1`, pageW / 2, pageH - 8, { align: 'center' })
-  doc.text(data.clinicName, pageW / 2, pageH - 4, { align: 'center' })
+  doc.text(`Este documento es una receta médica oficial de ${data.clinicName}.`, pageW / 2, pageH - 7, { align: 'center' })
+  doc.text(`Página 1 de 1 — Generado el ${new Date().toLocaleDateString('es-ES')}`, pageW / 2, pageH - 3.5, { align: 'center' })
 
   // ─── SAVE ────────────────────────────────────────────────
   const filename = `Receta_${data.patientName.replace(/\s/g, '_')}_${new Date(data.recordDate).toISOString().slice(0, 10)}.pdf`
