@@ -58,22 +58,19 @@ async function generatePrescriptionPDF(data: PrescriptionData) {
   // Logo (Proportional scaling)
   if (data.clinicLogoUrl) {
     try {
-      const img = new Image()
-      img.crossOrigin = 'Anonymous'
+      // Usamos el optimizador de imágenes de Next.js como proxy para evitar bloqueos CORS del navegador
+      const proxiedUrl = `/_next/image?url=${encodeURIComponent(data.clinicLogoUrl)}&w=256&q=75`
       
       const dataUrl = await new Promise<string>((resolve, reject) => {
-        img.onload = () => {
-          const canvas = document.createElement('canvas')
-          canvas.width = img.width
-          canvas.height = img.height
-          const ctx = canvas.getContext('2d')
-          ctx?.drawImage(img, 0, 0)
-          resolve(canvas.toDataURL('image/png'))
-        }
-        img.onerror = () => reject(new Error('Could not load image'))
-        img.src = data.clinicLogoUrl!
+        fetch(proxiedUrl)
+          .then(res => res.blob())
+          .then(blob => {
+            const reader = new FileReader()
+            reader.onloadend = () => resolve(reader.result as string)
+            reader.readAsDataURL(blob)
+          })
+          .catch(reject)
       })
-      
       const props = doc.getImageProperties(dataUrl)
       const ratio = props.width / props.height
       const maxW = 35
