@@ -36,7 +36,7 @@ export function ClinicProfileForm({ clinic }: { clinic: any }) {
       {/* SECCIÓN IDENTIDAD */}
       <div className="space-y-6">
         <div className="border-b border-slate-100 dark:border-white/5 pb-4">
-          <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tight text-xl">Identidad</h3>
+          <h3 className="font-black text-text-main uppercase tracking-tight text-xl">Identidad</h3>
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Nombre y Logotipo principal</p>
         </div>
 
@@ -101,7 +101,7 @@ export function ClinicProfileForm({ clinic }: { clinic: any }) {
       {/* SECCIÓN CONTACTO Y LOCALIZACIÓN */}
       <div className="space-y-6">
         <div className="border-b border-slate-100 dark:border-white/5 pb-4">
-          <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tight text-xl">Contacto y Ubicación</h3>
+          <h3 className="font-black text-text-main uppercase tracking-tight text-xl">Contacto y Ubicación</h3>
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Información que verán tus trabajadores</p>
         </div>
 
@@ -121,7 +121,7 @@ export function ClinicProfileForm({ clinic }: { clinic: any }) {
       {/* SECCIÓN SUSCRIPCIÓN */}
       <div className="space-y-6">
         <div className="border-b border-slate-100 dark:border-white/5 pb-4">
-          <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tight text-xl">Plan de Suscripción</h3>
+          <h3 className="font-black text-text-main uppercase tracking-tight text-xl">Plan de Suscripción</h3>
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Detalles de tu arquitectura contratada</p>
         </div>
 
