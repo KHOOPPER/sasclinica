@@ -53,77 +53,23 @@ export function ClinicProfileForm({ clinic }: { clinic: any }) {
             <Input id="name" name="name" defaultValue={clinic.name} required className="h-14 bg-white dark:bg-white/5 border border-slate-200 dark:border-none rounded-2xl px-6 text-sm font-bold text-slate-700 dark:text-slate-200 focus:ring-4 focus:ring-blue-600/5 transition-all shadow-sm" />
           </div>
 
-          <div className="space-y-4">
-            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Logotipo Oficial (PNG/JPG)</Label>
-            
-            <div className="flex gap-4 items-start">
-              <div className="flex-1 space-y-3">
-                <div className="relative">
-                  <Input 
-                    type="file" 
-                    accept="image/png, image/jpeg"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) {
-                        const reader = new FileReader()
-                        reader.onloadend = () => {
-                          const img = new Image()
-                          img.onload = () => {
-                            const canvas = document.createElement('canvas')
-                            const MAX_SIZE = 512 // Max width/height for logo
-                            let width = img.width
-                            let height = img.height
-
-                            if (width > height && width > MAX_SIZE) {
-                              height *= MAX_SIZE / width
-                              width = MAX_SIZE
-                            } else if (height > MAX_SIZE) {
-                              width *= MAX_SIZE / height
-                              height = MAX_SIZE
-                            }
-
-                            canvas.width = width
-                            canvas.height = height
-                            const ctx = canvas.getContext('2d')
-                            if (ctx) {
-                              ctx.drawImage(img, 0, 0, width, height)
-                              const compressedBase64 = canvas.toDataURL(file.type || 'image/png', 0.8)
-                              setLogoUrl(compressedBase64)
-                              toast.success('Imagen optimizada y cargada correctamente')
-                            }
-                          }
-                          img.src = reader.result as string
-                        }
-                        reader.readAsDataURL(file)
-                      }
-                    }}
-                    className="h-14 bg-white dark:bg-white/5 border border-slate-200 dark:border-none rounded-2xl px-6 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100 transition-all shadow-sm cursor-pointer" 
-                  />
-                </div>
-                <p className="text-[10px] font-bold text-slate-400 ml-2">Sube la imagen desde tu dispositivo, o pega un enlace externo (Cloudinary, etc).</p>
-
-                <div className="flex items-center gap-2">
-                  <div className="h-px bg-slate-200 dark:bg-white/10 flex-1"></div>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">O pega un enlace</span>
-                  <div className="h-px bg-slate-200 dark:bg-white/10 flex-1"></div>
-                </div>
-
-                <Input 
-                  id="logo_url" 
-                  value={logoUrl.startsWith('data:') ? '' : logoUrl}
-                  onChange={(e) => setLogoUrl(e.target.value)}
-                  placeholder="https://res.cloudinary.com/tu-logo.png" 
-                  className="h-14 bg-white dark:bg-white/5 border border-slate-200 dark:border-none rounded-2xl px-6 text-sm font-bold text-slate-700 dark:text-slate-200 focus:ring-4 focus:ring-blue-600/5 transition-all shadow-sm" 
-                />
-              </div>
-
-              {/* Vista Previa */}
+          <div className="space-y-3">
+            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Logotipo Oficial (URL)</Label>
+            <div className="flex gap-4 items-center">
+              <Input 
+                id="logo_url" 
+                value={logoUrl}
+                onChange={(e) => setLogoUrl(e.target.value)}
+                placeholder="https://res.cloudinary.com/tu-logo.png" 
+                className="h-14 bg-white dark:bg-white/5 border border-slate-200 dark:border-none rounded-2xl px-6 text-sm font-bold text-slate-700 dark:text-slate-200 focus:ring-4 focus:ring-blue-600/5 transition-all shadow-sm" 
+              />
               {logoUrl && (
-                <div className="h-32 w-32 shrink-0 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-2 flex items-center justify-center shadow-md">
-                  <img src={logoUrl} alt="Preview" className="max-h-full max-w-full object-contain" onError={() => toast.error('Error al cargar la vista previa del logo')} />
+                <div className="h-14 w-14 shrink-0 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-1.5 flex items-center justify-center shadow-md">
+                  <img src={logoUrl} alt="Preview" className="max-h-full max-w-full object-contain" onError={() => toast.error('URL inválida o no accesible')} />
                 </div>
               )}
             </div>
+            <p className="text-[10px] font-bold text-slate-400 ml-2">Pega el enlace público de tu logo (Cloudinary, Imgur, Google Drive, etc.).</p>
           </div>
         </div>
       </div>

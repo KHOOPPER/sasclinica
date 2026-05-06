@@ -11,23 +11,28 @@ export default async function AppointmentsPage() {
   await requireRole(['admin', 'receptionist', 'doctor', 'staff'])
   const supabase = await createClient()
 
-  // 1. Fetch data for the modal selects
-  const { data: patients } = await supabase.from('patients').select('id, first_name, last_name, dui').order('last_name')
-  const { data: doctors } = await supabase.from('staff_members').select('id, full_name').eq('specialty', 'doctor').order('full_name')
-  const { data: services } = await supabase.from('services').select('id, name, price, duration_minutes').eq('is_active', true).order('name')
-
-  // 2. Fetch today's appointments
+  // Fetch selects and appointments in parallel
   const today = new Date()
   today.setHours(0,0,0,0)
   const tomorrow = new Date(today)
   tomorrow.setDate(tomorrow.getDate() + 1)
 
-  const { data: appointments } = await supabase
-    .from('appointments')
-    .select('*, patient:patients(first_name, last_name, phone), doctor:staff_members(full_name), service:services(name, price), clinic:clinics(name)')
-    .gte('start_time', today.toISOString())
-    .lt('start_time', tomorrow.toISOString())
-    .order('start_time')
+  const [
+    { data: patients },
+    { data: doctors },
+    { data: services },
+    { data: appointments },
+  ] = await Promise.all([
+    supabase.from('patients').select('id, first_name, last_name, dui').order('last_name'),
+    supabase.from('staff_members').select('id, full_name').eq('specialty', 'doctor').order('full_name'),
+    supabase.from('services').select('id, name, price, duration_minutes').eq('is_active', true).order('name'),
+    supabase
+      .from('appointments')
+      .select('*, patient:patients(first_name, last_name, phone), doctor:staff_members(full_name), service:services(name, price), clinic:clinics(name)')
+      .gte('start_time', today.toISOString())
+      .lt('start_time', tomorrow.toISOString())
+      .order('start_time'),
+  ])
 
   const statusMap: Record<string, { label: string, color: string, icon: any }> = {
     'pending': { label: 'Pendiente', color: 'bg-slate-500/10 text-slate-400 border-slate-500/20', icon: Clock },

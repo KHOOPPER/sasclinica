@@ -16,43 +16,21 @@ export default async function PatientsPage({
   const { user } = await requireRole(['admin', 'receptionist', 'doctor', 'staff'])
   const supabase = await createClient()
   const params = await searchParams
-  const q = params.q || ''
+  const searchQuery = params.q || ''
   const view = params.view || 'all'
 
-  // Get doctors for modal dropdown
-  const { data: doctors } = await supabase
-    .from('staff_members')
-    .select('id, full_name')
-    .eq('specialty', 'doctor')
-    .order('full_name')
-
-  // Get all staff for name lookup (without FK hint)
-  const { data: staffMap } = await supabase
-    .from('staff_members')
-    .select('id, full_name')
-
-  // Build patient query - plain select, no FK join
-  let query = supabase
-    .from('patients')
-    .select('*')
-
-  if (q) {
-    query = query.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,dui.ilike.%${q}%,phone.ilike.%${q}%`)
-  }
-
-  if (view === 'mine') {
-    const { data: myStaff } = await supabase
-      .from('staff_members')
-      .select('id')
-      .eq('user_id', user!.id)
-      .maybeSingle()
-
-    if (myStaff) {
-      query = query.eq('assigned_doctor_id', myStaff.id)
-    }
-  }
-
-  const { data: rawPatients } = await query.order('last_name')
+  // Run all independent queries in parallel — much faster than sequential awaits
+  const [{ data: doctors }, { data: staffMap }, { data: rawPatients }] = await Promise.all([
+    supabase.from('staff_members').select('id, full_name').eq('specialty', 'doctor').order('full_name'),
+    supabase.from('staff_members').select('id, full_name'),
+    (() => {
+      let q = supabase.from('patients').select('id, first_name, last_name, dui, phone, email, fecha_nacimiento, alergias, assigned_doctor_id')
+      if (searchQuery) {
+        q = q.or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,dui.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`)
+      }
+      return q.order('last_name')
+    })(),
+  ])
 
   // Manually enrich with doctor name
   const staffById = Object.fromEntries((staffMap || []).map(s => [s.id, s]))
@@ -74,7 +52,7 @@ export default async function PatientsPage({
       {/* Tabs */}
       <div className="flex items-center gap-1 bg-slate-50/50 dark:bg-white/5 p-1.5 rounded-[1.25rem] w-fit border border-slate-200/50 dark:border-white/5">
         <Link
-          href={`/admin/pacientes?view=all${q ? `&q=${q}` : ''}`}
+          href={`/admin/pacientes?view=all${searchQuery ? `&q=${searchQuery}` : ''}`}
           className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
             view !== 'mine' 
               ? 'bg-white dark:bg-white/10 shadow-card text-emerald-500' 
@@ -84,7 +62,7 @@ export default async function PatientsPage({
           Todos los Pacientes
         </Link>
         <Link
-          href={`/admin/pacientes?view=mine${q ? `&q=${q}` : ''}`}
+          href={`/admin/pacientes?view=mine${searchQuery ? `&q=${searchQuery}` : ''}`}
           className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
             view === 'mine' 
               ? 'bg-white dark:bg-white/10 shadow-card text-emerald-500' 
@@ -101,7 +79,7 @@ export default async function PatientsPage({
         <input
           type="text"
           name="q"
-          defaultValue={q}
+          defaultValue={searchQuery}
           placeholder="Buscar por nombre, DUI o teléfono..."
           className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-black uppercase tracking-widest text-text-main outline-none placeholder:text-slate-500"
         />
