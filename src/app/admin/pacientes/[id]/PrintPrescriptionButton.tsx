@@ -271,7 +271,7 @@ async function generatePrescriptionPDF(data: PrescriptionData) {
 interface Props {
   record: any
   patient: any
-  clinic: { name: string; address?: string; phone?: string; logo_url?: string }
+  clinic: { id?: string; name: string; address?: string; phone?: string; logo_url?: string }
 }
 
 export function PrintPrescriptionButton({ record, patient, clinic }: Props) {
@@ -280,11 +280,25 @@ export function PrintPrescriptionButton({ record, patient, clinic }: Props) {
   const handlePrint = async () => {
     setLoading(true)
     try {
+      // Fetch logo from API at print time to avoid prop size limits
+      let logoUrl: string | undefined = undefined
+      if (clinic.id) {
+        try {
+          const res = await fetch(`/api/clinic-logo?clinicId=${clinic.id}`)
+          if (res.ok) {
+            const data = await res.json()
+            logoUrl = data.logo || undefined
+          }
+        } catch (e) {
+          console.error('Could not fetch clinic logo:', e)
+        }
+      }
+
       await generatePrescriptionPDF({
         clinicName: clinic.name,
         clinicAddress: clinic.address,
         clinicPhone: clinic.phone,
-        clinicLogoUrl: clinic.logo_url,
+        clinicLogoUrl: logoUrl,
         patientName: `${patient.first_name} ${patient.last_name}`,
         patientDui: patient.dui,
         patientBirthDate: patient.fecha_nacimiento,
@@ -295,6 +309,9 @@ export function PrintPrescriptionButton({ record, patient, clinic }: Props) {
           ? `Dr. ${record.doctor.first_name} ${record.doctor.last_name || ''}`.trim()
           : record.fallback_doctor_name || 'Médico Responsable',
       })
+    } catch (err: any) {
+      console.error('Print error:', err)
+      toast.error('Error al generar el PDF: ' + (err.message || 'Error desconocido'))
     } finally {
       setLoading(false)
     }
