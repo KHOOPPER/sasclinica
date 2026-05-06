@@ -36,83 +36,54 @@ export async function updateClinicSettings(formData: FormData) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    // 2a. Update basic info in clinics (excluding logo_url to test if it's the culprit)
+    // 2. Update clinics basic data (name, address, phone) + logo
     const { error: clinicError } = await supabaseAdmin
       .from('clinics')
-      .update({
-        name,
-        address,
-        phone,
-        updated_at: new Date().toISOString()
-      })
+      .update({ name, address, phone, logo_url: logoUrl || null, updated_at: new Date().toISOString() })
       .eq('id', id)
 
     if (clinicError) {
       console.error('Clinic Update Error:', clinicError)
-      return { success: false, error: 'Error actualizando datos básicos: ' + clinicError.message }
+      return { success: false, error: 'Error actualizando clínica: ' + clinicError.message }
     }
 
-    // 2b. Try to update logo_url in clinics
-    const { error: logoError } = await supabaseAdmin
-      .from('clinics')
-      .update({ logo_url: logoUrl || null })
-      .eq('id', id)
-
-    if (logoError && !logoError.message.includes('column')) {
-      console.error('Logo Update Error (clinics):', logoError)
-      // We don't return here yet, we try the alternative
-    }
-
-    // 2c. Robust Save in public_clinic_settings
-    // We update both logo_url and clinic_logo to be sure, and use a safe upsert logic
+    // 3. Upsert logo into public_clinic_settings
     const { data: existingSettings } = await supabaseAdmin
       .from('public_clinic_settings')
       .select('id')
       .eq('clinic_id', id)
       .maybeSingle()
 
-    const settingsData = {
-      clinic_id: id,
-      tenant_id: tenantId,
+    // ONLY update logo_url and clinic_logo — do NOT include columns that may not exist
+    const logoData = {
       logo_url: logoUrl || null,
-      clinic_logo: logoUrl || null, // Double check if this is the one
-      favicon_url: logoUrl || null, // Optional but helpful
+      clinic_logo: logoUrl || null,
       updated_at: new Date().toISOString(),
-      is_active: true
     }
 
-    let sError;
+    let sError
     if (existingSettings) {
       const { error } = await supabaseAdmin
         .from('public_clinic_settings')
-        .update(settingsData)
+        .update(logoData)
         .eq('id', existingSettings.id)
       sError = error
     } else {
-      // Necesitamos un slug para insertar ya que es NOT NULL
       const { data: tenantData } = await supabaseAdmin
-        .from('tenants')
-        .select('slug')
-        .eq('id', tenantId)
-        .single()
-
+        .from('tenants').select('slug').eq('id', tenantId).single()
       const { error } = await supabaseAdmin
         .from('public_clinic_settings')
-        .insert([{
-          ...settingsData,
-          slug: tenantData?.slug || `clinica-${id}`
-        }])
+        .insert([{ ...logoData, clinic_id: id, tenant_id: tenantId, slug: tenantData?.slug || `clinica-${id}`, is_active: true }])
       sError = error
     }
 
     if (sError) {
-      console.error('Settings Save Error:', sError)
-      return { success: false, error: `Error al guardar logo en BBDD: ${sError.message}` }
+      console.error('Settings Logo Save Error:', sError)
+      return { success: false, error: `Error guardando logo: ${sError.message}` }
     }
 
     revalidatePath('/admin/configuracion', 'page')
     revalidatePath('/admin', 'layout')
-    revalidatePath(`/[slug]`, 'layout') 
     return { success: true }
   } catch (err: any) {
     console.error('Fatal Error:', err)

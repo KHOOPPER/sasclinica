@@ -42,36 +42,53 @@ export function ClinicProfileForm({ clinic }: { clinic: any }) {
       
       {/* SECCIÓN IDENTIDAD */}
       <div className="space-y-6">
-        <div className="border-b border-slate-100 dark:border-white/5 pb-4">
-          <h3 className="font-black text-text-main uppercase tracking-tight text-xl">Identidad</h3>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Nombre y Logotipo principal</p>
+        <div className="border-b border-slate-200 dark:border-white/5 pb-4">
+          <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tight text-xl">Identidad</h3>
+          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Nombre y Logotipo principal</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre Comercial</Label>
-            <Input id="name" name="name" defaultValue={clinic.name} required className="h-14 bg-white dark:bg-white/5 border border-slate-200 dark:border-none rounded-2xl px-6 text-sm font-bold text-slate-700 dark:text-slate-200 focus:ring-4 focus:ring-blue-600/5 transition-all shadow-sm" />
+            <label htmlFor="name" className="block text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest ml-1">Nombre Comercial</label>
+            <input
+              id="name"
+              name="name"
+              defaultValue={clinic.name}
+              required
+              className="w-full h-14 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-6 text-sm font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all shadow-sm"
+            />
           </div>
 
-          <div className="space-y-3">
-            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Logotipo Oficial (URL)</Label>
-            <div className="flex gap-4 items-center">
-              <Input 
-                id="logo_url" 
-                value={logoUrl}
-                onChange={(e) => setLogoUrl(e.target.value)}
-                placeholder="https://res.cloudinary.com/tu-logo.png" 
-                className="h-14 bg-white dark:bg-white/5 border border-slate-200 dark:border-none rounded-2xl px-6 text-sm font-bold text-slate-700 dark:text-slate-200 focus:ring-4 focus:ring-blue-600/5 transition-all shadow-sm" 
-              />
-              {logoUrl && (
-                <div className="h-14 w-14 shrink-0 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-1.5 flex items-center justify-center shadow-md">
-                  <img src={logoUrl} alt="Preview" className="max-h-full max-w-full object-contain" onError={() => toast.error('URL inválida o no accesible')} />
-                </div>
-              )}
-            </div>
-            <p className="text-[10px] font-bold text-slate-400 ml-2">Pega el enlace público de tu logo (Cloudinary, Imgur, Google Drive, etc.).</p>
+          <div className="space-y-2">
+            <label htmlFor="logo_url" className="block text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest ml-1">Logotipo Oficial (URL)</label>
+            <input
+              id="logo_url"
+              value={logoUrl}
+              onChange={(e) => setLogoUrl(e.target.value)}
+              placeholder="https://res.cloudinary.com/tu-logo.png"
+              className="w-full h-14 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-6 text-sm font-bold text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all shadow-sm"
+            />
+            <p className="text-[10px] text-slate-500 ml-2">Pega el enlace público de tu logo (Cloudinary, Imgur, etc).</p>
           </div>
         </div>
+
+        {/* Vista previa del logo separada */}
+        {logoUrl && (
+          <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10">
+            <div className="h-20 w-20 shrink-0 rounded-xl bg-white border border-slate-200 p-2 flex items-center justify-center shadow-sm">
+              <img
+                src={logoUrl}
+                alt="Vista previa del logo"
+                className="max-h-full max-w-full object-contain"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+              />
+            </div>
+            <div>
+              <p className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">Vista Previa</p>
+              <p className="text-[10px] text-slate-500 mt-1 break-all max-w-xs">{logoUrl.slice(0, 60)}...</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* SECCIÓN CONTACTO Y LOCALIZACIÓN */}
