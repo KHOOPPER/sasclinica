@@ -15,18 +15,25 @@ export function ClinicProfileForm({ clinic }: { clinic: any }) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsSaving(true)
-    const formData = new FormData(e.currentTarget)
-    formData.append('logoUrl', logoUrl)
     
-    const result = await updateClinicSettings(formData)
-    if (result.success) {
-      toast.success('¡Configuración actualizada con éxito!')
-      // Force a refresh to update the sidebar/header logo and name
-      window.location.reload()
-    } else {
-      toast.error(result.error || 'Ocurrió un error al guardar')
+    try {
+      const formData = new FormData(e.currentTarget)
+      formData.append('logoUrl', logoUrl)
+      
+      const result = await updateClinicSettings(formData)
+      if (result.success) {
+        toast.success('¡Configuración actualizada con éxito!')
+        // Force a refresh to update the sidebar/header logo and name
+        window.location.reload()
+      } else {
+        toast.error(result.error || 'Ocurrió un error al guardar')
+        setIsSaving(false)
+      }
+    } catch (error: any) {
+      console.error('Submit Error:', error)
+      toast.error('Error de red o archivo muy pesado. Intenta con un logo más pequeño (menor a 2MB).')
+      setIsSaving(false)
     }
-    setIsSaving(false)
   }
 
   return (
@@ -60,8 +67,32 @@ export function ClinicProfileForm({ clinic }: { clinic: any }) {
                       if (file) {
                         const reader = new FileReader()
                         reader.onloadend = () => {
-                          setLogoUrl(reader.result as string)
-                          toast.success('Imagen cargada correctamente')
+                          const img = new Image()
+                          img.onload = () => {
+                            const canvas = document.createElement('canvas')
+                            const MAX_SIZE = 512 // Max width/height for logo
+                            let width = img.width
+                            let height = img.height
+
+                            if (width > height && width > MAX_SIZE) {
+                              height *= MAX_SIZE / width
+                              width = MAX_SIZE
+                            } else if (height > MAX_SIZE) {
+                              width *= MAX_SIZE / height
+                              height = MAX_SIZE
+                            }
+
+                            canvas.width = width
+                            canvas.height = height
+                            const ctx = canvas.getContext('2d')
+                            if (ctx) {
+                              ctx.drawImage(img, 0, 0, width, height)
+                              const compressedBase64 = canvas.toDataURL(file.type || 'image/png', 0.8)
+                              setLogoUrl(compressedBase64)
+                              toast.success('Imagen optimizada y cargada correctamente')
+                            }
+                          }
+                          img.src = reader.result as string
                         }
                         reader.readAsDataURL(file)
                       }
