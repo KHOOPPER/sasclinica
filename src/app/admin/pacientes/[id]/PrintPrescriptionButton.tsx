@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { FileText, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
 interface PrescriptionData {
   // Clinic
@@ -65,16 +66,24 @@ async function generatePrescriptionPDF(data: PrescriptionData) {
           return
         }
 
-        // Si es una URL normal, intentamos el proxy como fallback
-        const proxiedUrl = `/_next/image?url=${encodeURIComponent(data.clinicLogoUrl!)}&w=256&q=75`
-        fetch(proxiedUrl)
-          .then(res => res.blob())
+        // Si es un enlace externo (Cloudinary, etc), forzamos una descarga fresca evadiendo el caché corrupto del navegador
+        const safeUrl = data.clinicLogoUrl + (data.clinicLogoUrl!.includes('?') ? '&' : '?') + 'nocache=' + Date.now()
+        
+        fetch(safeUrl, { mode: 'cors' })
+          .then(res => {
+            if (!res.ok) throw new Error('Network response was not ok')
+            return res.blob()
+          })
           .then(blob => {
             const reader = new FileReader()
             reader.onloadend = () => resolve(reader.result as string)
+            reader.onerror = () => reject(new Error('FileReader error'))
             reader.readAsDataURL(blob)
           })
-          .catch(reject)
+          .catch(error => {
+            console.error("Direct fetch failed:", error)
+            reject(error)
+          })
       })
       const props = doc.getImageProperties(dataUrl)
       const ratio = props.width / props.height
@@ -89,9 +98,12 @@ async function generatePrescriptionPDF(data: PrescriptionData) {
         logoW = imgH * ratio
       }
       
-      doc.addImage(dataUrl, 'PNG', marginX, headerY, logoW, imgH)
-    } catch (_) { 
-      console.error('Prescription Logo Load Error:', _)
+      // Usa el tipo de archivo detectado automáticamente para evitar fallos si es JPG
+      const fileType = props.fileType || 'PNG'
+      doc.addImage(dataUrl, fileType, marginX, headerY, logoW, imgH)
+    } catch (error: any) { 
+      console.error('Prescription Logo Load Error:', error)
+      toast.error(`No se pudo dibujar el logo en el PDF: ${error.message || 'Formato no soportado'}`)
     }
   }
 
