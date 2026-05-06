@@ -59,33 +59,45 @@ async function generatePrescriptionPDF(data: PrescriptionData) {
   // Logo (Proportional scaling)
   if (data.clinicLogoUrl) {
     try {
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        // Si ya es un Base64 (enviado por el servidor), lo usamos directo
-        if (data.clinicLogoUrl?.startsWith('data:')) {
-          resolve(data.clinicLogoUrl)
-          return
+      // PROCESADOR DE IMAGEN INFALIBLE (HTML5 Canvas)
+      const processedDataUrl = await new Promise<string>((resolve, reject) => {
+        const img = new Image()
+        img.crossOrigin = 'Anonymous'
+        
+        img.onload = () => {
+          try {
+            // Creamos un lienzo virtual para que el navegador decodifique la imagen de forma nativa
+            const canvas = document.createElement('canvas')
+            canvas.width = img.width
+            canvas.height = img.height
+            const ctx = canvas.getContext('2d')
+            if (!ctx) throw new Error('No se pudo crear el contexto 2D')
+            
+            // Dibujamos la imagen (limpia cualquier error de formato)
+            ctx.drawImage(img, 0, 0)
+            
+            // Exportamos a un formato universal garantizado para jsPDF
+            const safeBase64 = canvas.toDataURL('image/png')
+            resolve(safeBase64)
+          } catch (e) {
+            reject(e)
+          }
+        }
+        
+        img.onerror = () => {
+          reject(new Error('El navegador no pudo cargar la imagen para procesarla'))
         }
 
-        // Si es un enlace externo (Cloudinary, etc), forzamos una descarga fresca evadiendo el caché corrupto del navegador
-        const safeUrl = data.clinicLogoUrl + (data.clinicLogoUrl!.includes('?') ? '&' : '?') + 'nocache=' + Date.now()
-        
-        fetch(safeUrl, { mode: 'cors' })
-          .then(res => {
-            if (!res.ok) throw new Error('Network response was not ok')
-            return res.blob()
-          })
-          .then(blob => {
-            const reader = new FileReader()
-            reader.onloadend = () => resolve(reader.result as string)
-            reader.onerror = () => reject(new Error('FileReader error'))
-            reader.readAsDataURL(blob)
-          })
-          .catch(error => {
-            console.error("Direct fetch failed:", error)
-            reject(error)
-          })
+        // Si es un enlace externo (Cloudinary), aplicamos rompe-caché
+        if (!data.clinicLogoUrl!.startsWith('data:')) {
+          img.src = data.clinicLogoUrl + (data.clinicLogoUrl!.includes('?') ? '&' : '?') + 'nocache=' + Date.now()
+        } else {
+          // Si ya es Base64 (subido por el usuario), lo cargamos directo
+          img.src = data.clinicLogoUrl!
+        }
       })
-      const props = doc.getImageProperties(dataUrl)
+
+      const props = doc.getImageProperties(processedDataUrl)
       const ratio = props.width / props.height
       const maxW = 35
       const maxH = 22
@@ -98,9 +110,7 @@ async function generatePrescriptionPDF(data: PrescriptionData) {
         logoW = imgH * ratio
       }
       
-      // Usa el tipo de archivo detectado automáticamente para evitar fallos si es JPG
-      const fileType = props.fileType || 'PNG'
-      doc.addImage(dataUrl, fileType, marginX, headerY, logoW, imgH)
+      doc.addImage(processedDataUrl, 'PNG', marginX, headerY, logoW, imgH)
     } catch (error: any) { 
       console.error('Prescription Logo Load Error:', error)
       toast.error(`No se pudo dibujar el logo en el PDF: ${error.message || 'Formato no soportado'}`)
