@@ -47,22 +47,21 @@ export function ClinicProfileForm({ clinic }: { clinic: any }) {
           </div>
 
           <div className="space-y-4">
-            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Logotipo (Archivo o URL)</Label>
+            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Logotipo Oficial (PNG/JPG)</Label>
             
             <div className="flex gap-4 items-start">
               <div className="flex-1 space-y-3">
-                {/* Opción 1: Subir Archivo */}
                 <div className="relative">
                   <Input 
                     type="file" 
-                    accept="image/png, image/jpeg, image/svg+xml"
+                    accept="image/png, image/jpeg"
                     onChange={(e) => {
                       const file = e.target.files?.[0]
                       if (file) {
                         const reader = new FileReader()
                         reader.onloadend = () => {
                           setLogoUrl(reader.result as string)
-                          toast.success('Imagen cargada y convertida correctamente')
+                          toast.success('Imagen cargada correctamente')
                         }
                         reader.readAsDataURL(file)
                       }
@@ -70,21 +69,7 @@ export function ClinicProfileForm({ clinic }: { clinic: any }) {
                     className="h-14 bg-white dark:bg-white/5 border border-slate-200 dark:border-none rounded-2xl px-6 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100 transition-all shadow-sm cursor-pointer" 
                   />
                 </div>
-                
-                <div className="flex items-center gap-2">
-                  <div className="h-px bg-slate-200 dark:bg-white/10 flex-1"></div>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">O pega un enlace</span>
-                  <div className="h-px bg-slate-200 dark:bg-white/10 flex-1"></div>
-                </div>
-
-                {/* Opción 2: URL manual */}
-                <Input 
-                  id="logo_url" 
-                  value={logoUrl} 
-                  onChange={(e) => setLogoUrl(e.target.value)}
-                  placeholder="https://tu-sitio.com/logo.png" 
-                  className="h-14 bg-white dark:bg-white/5 border border-slate-200 dark:border-none rounded-2xl px-6 text-sm font-bold text-slate-700 dark:text-slate-200 focus:ring-4 focus:ring-blue-600/5 transition-all shadow-sm" 
-                />
+                <p className="text-[10px] font-bold text-slate-400 ml-2">Selecciona la imagen desde tu dispositivo. Se guardará internamente para evitar errores en las recetas.</p>
               </div>
 
               {/* Vista Previa */}
