@@ -100,7 +100,21 @@ export function ClinicProfileForm({ clinic }: { clinic: any }) {
                     className="h-14 bg-white dark:bg-white/5 border border-slate-200 dark:border-none rounded-2xl px-6 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100 transition-all shadow-sm cursor-pointer" 
                   />
                 </div>
-                <p className="text-[10px] font-bold text-slate-400 ml-2">Selecciona la imagen desde tu dispositivo. Se guardará internamente para evitar errores en las recetas.</p>
+                <p className="text-[10px] font-bold text-slate-400 ml-2">Sube la imagen desde tu dispositivo, o pega un enlace externo (Cloudinary, etc).</p>
+
+                <div className="flex items-center gap-2">
+                  <div className="h-px bg-slate-200 dark:bg-white/10 flex-1"></div>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">O pega un enlace</span>
+                  <div className="h-px bg-slate-200 dark:bg-white/10 flex-1"></div>
+                </div>
+
+                <Input 
+                  id="logo_url" 
+                  value={logoUrl.startsWith('data:') ? '' : logoUrl}
+                  onChange={(e) => setLogoUrl(e.target.value)}
+                  placeholder="https://res.cloudinary.com/tu-logo.png" 
+                  className="h-14 bg-white dark:bg-white/5 border border-slate-200 dark:border-none rounded-2xl px-6 text-sm font-bold text-slate-700 dark:text-slate-200 focus:ring-4 focus:ring-blue-600/5 transition-all shadow-sm" 
+                />
               </div>
 
               {/* Vista Previa */}
