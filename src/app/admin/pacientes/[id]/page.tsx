@@ -13,55 +13,45 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
   const { id } = await params
   const supabase = await createClient()
 
-  // Initialize Admin Client once
-  const supabaseAdmin = createSupabaseAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-
-  // 1. Fetch patient first (needed to know clinic_id / tenant_id for subsequent queries)
+  // 1. Fetch patient
   const { data: patient } = await supabase
     .from('patients')
-    .select('id, first_name, last_name, dui, fecha_nacimiento, phone, email, direccion_completa, alergias, tipo_sangre, antecedentes_familiares, clinic_id, tenant_id, assigned_doctor_id')
+    .select('*')
     .eq('id', id)
     .single()
 
   if (!patient) notFound()
 
-  // 2. Run all remaining queries IN PARALLEL — ~3x faster than sequential awaits
-  const clinicFilter = patient.clinic_id
-    ? (q: any) => q.eq('id', patient.clinic_id)
-    : (q: any) => q.eq('tenant_id', patient.tenant_id)
+  // Initialize Admin Client once for all data fetching
+  const supabaseAdmin = createSupabaseAdmin(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
 
-  const [
-    { data: records },
-    { data: clinics },
-    { data: fallbackDoctor },
-  ] = await Promise.all([
-    supabaseAdmin
-      .from('clinical_records')
-      .select('id, fecha_consulta, created_at, motivo_consulta, sintomas, diagnostico, tratamiento_recetado, notas_internas, doctor:profiles(first_name, last_name)')
-      .eq('patient_id', id)
-      .order('fecha_consulta', { ascending: false })
-      .order('created_at', { ascending: false }),
+  // 2. Fetch data using Admin Client to bypass RLS issues
+  const { data: records } = await supabaseAdmin
+    .from('clinical_records')
+    .select('*, doctor:profiles(first_name, last_name)')
+    .eq('patient_id', id)
+    .order('fecha_consulta', { ascending: false })
+    .order('created_at', { ascending: false })
 
-    clinicFilter(
-      supabaseAdmin.from('clinics').select('id, name, address, phone, public_clinic_settings(logo_url, clinic_logo)')
-    ),
+  // 3. Fetch clinic info using Admin Client to bypass RLS and ensure branding visibility
+  const clinicQuery = supabaseAdmin.from('clinics').select('*, public_clinic_settings(logo_url, clinic_logo)')
+  
+  if (patient.clinic_id) {
+    clinicQuery.eq('id', patient.clinic_id)
+  } else {
+    clinicQuery.eq('tenant_id', patient.tenant_id)
+  }
 
-    supabase
-      .from('staff_members')
-      .select('full_name')
-      .eq('tenant_id', patient.tenant_id)
-      .eq('role', 'doctor')
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .maybeSingle(),
-  ])
+  const { data: clinics } = await clinicQuery
+  const clinicInfo = clinics?.[0] // Tomamos la primera encontrada
 
-  const clinicInfo = clinics?.[0]
+  // Priorizar clinic_logo (campo Base64 del formulario) sobre logo_url (URL externa)
   const publicSettings = clinicInfo?.public_clinic_settings?.[0]
-  const finalLogo = publicSettings?.clinic_logo || publicSettings?.logo_url || undefined
+  // clinic_logo es el campo donde guardamos el Base64 subido desde la PC
+  const finalLogo = publicSettings?.clinic_logo || publicSettings?.logo_url || clinicInfo?.logo_url || undefined
 
   const clinicData = {
     id: clinicInfo?.id || null,
@@ -69,6 +59,16 @@ export default async function PatientProfilePage({ params }: { params: Promise<{
     address: (clinicInfo as any)?.address || undefined,
     phone: (clinicInfo as any)?.phone || undefined,
   }
+
+  // 4. Fetch fallback doctor (first registered doctor)
+  const { data: fallbackDoctor } = await supabase
+    .from('staff_members')
+    .select('full_name')
+    .eq('tenant_id', patient.tenant_id)
+    .eq('role', 'doctor')
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
 
   const fallbackDoctorName = fallbackDoctor ? `Dr. ${fallbackDoctor.full_name}` : 'Médico Responsable'
 
