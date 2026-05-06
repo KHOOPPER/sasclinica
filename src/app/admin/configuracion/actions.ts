@@ -36,10 +36,10 @@ export async function updateClinicSettings(formData: FormData) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    // 2. Update clinics basic data (name, address, phone) + logo
+    // 2. Update clinics basic data (name, address, phone only — logo_url column does NOT exist in clinics)
     const { error: clinicError } = await supabaseAdmin
       .from('clinics')
-      .update({ name, address, phone, logo_url: logoUrl || null, updated_at: new Date().toISOString() })
+      .update({ name, address, phone, updated_at: new Date().toISOString() })
       .eq('id', id)
 
     if (clinicError) {
