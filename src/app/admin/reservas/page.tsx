@@ -1,0 +1,183 @@
+export const dynamic = 'force-dynamic'
+import { createClient } from '@/lib/supabase/server'
+import { requireRole } from '@/lib/auth-utils'
+import { NewAppointmentModal } from './NewAppointmentModal'
+import PaymentModal from './PaymentModal'
+import MarkAsAttendedButton from './MarkAsAttendedButton'
+import WhatsAppReminderButton from './WhatsAppReminderButton'
+import { Calendar as CalendarIcon, Clock, User, Stethoscope, CheckCircle2, AlertCircle, XCircle } from 'lucide-react'
+
+export default async function AppointmentsPage() {
+  await requireRole(['admin', 'receptionist', 'doctor', 'staff'])
+  const supabase = await createClient()
+
+  // Fetch selects and appointments in parallel
+  const today = new Date()
+  today.setHours(0,0,0,0)
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+
+  const [
+    { data: patients },
+    { data: doctors },
+    { data: services },
+    { data: appointments },
+  ] = await Promise.all([
+    supabase.from('patients').select('id, first_name, last_name, dui').order('last_name'),
+    supabase.from('staff_members').select('id, full_name').eq('specialty', 'doctor').order('full_name'),
+    supabase.from('services').select('id, name, price, duration_minutes').eq('is_active', true).order('name'),
+    supabase
+      .from('appointments')
+      .select('*, patient:patients(first_name, last_name, phone), doctor:staff_members(full_name), service:services(name, price), clinic:clinics(name)')
+      .gte('start_time', today.toISOString())
+      .lt('start_time', tomorrow.toISOString())
+      .order('start_time'),
+  ])
+
+  const statusMap: Record<string, { label: string, color: string, icon: any }> = {
+    'pending': { label: 'Pendiente', color: 'bg-slate-500/10 text-slate-400 border-slate-500/20', icon: Clock },
+    'confirmed': { label: 'Confirmada', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', icon: CheckCircle2 },
+    'completed': { label: 'Pagada', color: 'bg-emerald-500 text-white dark:text-black border-emerald-600', icon: CheckCircle2 },
+    'cancelled': { label: 'Cancelada', color: 'bg-red-500/10 text-red-500 border-red-500/20', icon: XCircle },
+    'no_show': { label: 'Inasistencia', color: 'bg-amber-500/10 text-amber-500 border-amber-500/20', icon: AlertCircle },
+    'attended_pending_payment': { label: 'Atendido / Pendiente', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20', icon: Clock }
+  }
+
+  return (
+    <div className="space-y-6 p-1 md:p-2">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl md:text-2xl font-black text-text-main flex items-center gap-3 uppercase tracking-tight leading-none mb-1">
+            <CalendarIcon className="h-6 w-6 text-emerald-500" /> Agenda de Reservas
+          </h2>
+          <p className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Citas hoy: {today.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}</p>
+        </div>
+        <div className="w-full md:w-auto">
+          <NewAppointmentModal 
+            patients={patients || []} 
+            doctors={doctors || []} 
+            services={services || []} 
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8">
+        {/* Simple Agenda / Timeline */}
+        <div className="lg:col-span-3 space-y-4">
+          {!appointments || appointments.length === 0 ? (
+            <div className="bg-card-bg rounded-[2rem] md:rounded-[2.5rem] border border-dashed border-slate-200/50 dark:border-white/10 p-10 md:p-20 text-center text-slate-400 shadow-card">
+              <Clock className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-4 opacity-20" />
+              <p className="font-black text-base md:text-lg text-text-main uppercase tracking-tight">No hay citas para hoy.</p>
+              <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-500">Agende su primera consulta ahora.</p>
+            </div>
+          ) : (
+            appointments.map((apt) => {
+              const status = statusMap[apt.status] || statusMap.pending
+              const canPay = apt.status !== 'completed' && apt.status !== 'cancelled'
+              const isPaid = apt.status === 'completed'
+              
+              return (
+                <div key={apt.id} className="bg-card-bg p-5 md:p-6 rounded-[1.75rem] md:rounded-[2rem] border border-slate-200/50 dark:border-white/5 shadow-card flex flex-col md:flex-row items-start md:items-center gap-5 md:gap-6 hover:-translate-y-1 transition-all group">
+                  {/* Time Badge */}
+                  <div className={`px-4 py-4 md:py-5 rounded-2xl flex flex-row md:flex-col items-center justify-between md:justify-center w-full md:w-[110px] border transition-all ${
+                    isPaid ? 'bg-emerald-500 border-emerald-600 shadow-lg shadow-emerald-500/20' : 'bg-slate-50/50 dark:bg-white/5 border-slate-200/50 dark:border-white/10'
+                  }`}>
+                    <div className="flex flex-col items-start md:items-center">
+                      <span className={`text-lg md:text-xl font-black tracking-tighter leading-none ${isPaid ? 'text-white dark:text-black' : 'text-text-main'}`}>
+                        {new Date(apt.start_time).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                      </span>
+                      <span className={`text-[8px] md:text-[9px] uppercase font-black mt-1 tracking-widest leading-none ${isPaid ? 'text-white/70 dark:text-black/60' : 'text-slate-500'}`}>HORARIO</span>
+                    </div>
+                    
+                    <div className="md:hidden">
+                       <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-[0.1em] border shadow-sm ${status.color}`}>
+                          {status.label}
+                       </span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 min-w-0 w-full">
+                    <div className="hidden md:flex items-center gap-3 mb-1">
+                      <h3 className="text-lg font-black text-text-main truncate tracking-tight uppercase leading-none">{apt.service?.name}</h3>
+                      <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-[0.1em] border shadow-sm ${status.color}`}>
+                        {status.label}
+                      </span>
+                    </div>
+
+                    <div className="md:hidden mb-2">
+                       <h3 className="text-base font-black text-text-main truncate tracking-tight uppercase leading-none">{apt.service?.name}</h3>
+                    </div>
+                    
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-x-6 gap-y-2">
+                      <div className="flex items-center gap-2 text-[10px] md:text-[11px] font-black text-slate-400 uppercase tracking-tight">
+                        <User className="h-3.5 w-3.5 md:h-4 md:w-4 text-emerald-500/70" />
+                        <span className="text-text-main">{apt.patient?.first_name} {apt.patient?.last_name}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px] md:text-[11px] font-black text-slate-500 uppercase tracking-tight">
+                        <Stethoscope className="h-3.5 w-3.5 md:h-4 md:w-4 text-slate-500/50" />
+                        <span>Dr. {apt.doctor?.full_name}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center justify-between w-full md:w-auto gap-4 md:gap-6 pt-4 md:pt-0 border-t border-slate-100 dark:border-white/5 md:border-none">
+                    <div className="text-left md:text-right w-full md:w-auto flex items-center md:block gap-2">
+                      <div className="text-text-main font-black text-lg md:text-xl tracking-tighter tabular-nums">${apt.service?.price}</div>
+                      <div className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Monto</div>
+                    </div>
+                    
+                    {canPay && (
+                      <div className="flex items-center gap-2 md:gap-3 w-full sm:w-auto">
+                        <WhatsAppReminderButton appointment={apt as any} />
+                        {(apt.status === 'pending' || apt.status === 'confirmed') && (
+                          <MarkAsAttendedButton appointmentId={apt.id} />
+                        )}
+                        <PaymentModal appointment={apt} />
+                      </div>
+                    )}
+                    {isPaid && (
+                      <div className="bg-emerald-500/10 p-2.5 md:p-3 rounded-2xl border border-emerald-500/20 self-end md:self-auto">
+                        <CheckCircle2 className="h-5 w-5 md:h-6 md:w-6 text-emerald-500" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </div>
+
+        {/* Sidebar Mini-Calendar */}
+        <div className="space-y-6">
+          <div className="hidden md:block bg-emerald-500 rounded-[2.5rem] p-8 text-white dark:text-black shadow-lg shadow-emerald-500/20">
+            <h3 className="font-black text-lg mb-6 flex items-center gap-3 tracking-tight uppercase leading-none"><CalendarIcon className="h-5 w-5" /> Vista del Mes</h3>
+            <div className="grid grid-cols-7 gap-1 text-center text-[9px] font-black opacity-60 uppercase tracking-widest mb-4">
+              <span>D</span><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span>
+            </div>
+            <div className="grid grid-cols-7 gap-1 text-center font-black">
+              {Array.from({length: 31}).map((_, i) => (
+                <div key={i} className={`h-8 w-8 flex items-center justify-center rounded-xl text-[11px] transition-all cursor-pointer ${i + 1 === today.getDate() ? 'bg-white text-emerald-600 shadow-xl' : 'hover:bg-white/20'}`}>
+                  {i + 1}
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="bg-card-bg rounded-[2.5rem] border border-slate-200/50 dark:border-white/5 p-6 md:p-8 shadow-card">
+             <h4 className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100/50 dark:border-white/5 pb-4 mb-5 md:mb-6">Métricas del Día</h4>
+             <div className="space-y-4 md:space-y-6">
+                <div className="flex justify-between items-center">
+                   <span className="text-[10px] md:text-[11px] font-black text-slate-400 uppercase tracking-widest">Total Consultas</span>
+                   <span className="text-lg md:text-xl font-black text-text-main">{appointments?.length || 0}</span>
+                </div>
+                <div className="flex justify-between items-center text-emerald-500">
+                   <span className="text-[10px] md:text-[11px] font-black uppercase tracking-widest opacity-60">Ingresos Proyectados</span>
+                   <span className="text-lg md:text-xl font-black tabular-nums tracking-tighter">${appointments?.reduce((acc, apt) => acc + (Number(apt.service?.price) || 0), 0).toFixed(2)}</span>
+                </div>
+             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

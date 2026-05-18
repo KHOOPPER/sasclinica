@@ -1,0 +1,1 @@
+import { NextResponse } from 'next/server'; import { getEffectiveRole } from '@/lib/auth-utils'; export const dynamic = 'force-dynamic'; export async function GET() { const role = await getEffectiveRole(); return NextResponse.json(role); }
